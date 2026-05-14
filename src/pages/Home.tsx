@@ -1,0 +1,116 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Game, Category } from '../types';
+import { GameCard } from '../components/GameCard';
+import { GAMES } from '../data/gamesData';
+import { motion } from 'motion/react';
+
+interface HomeProps {
+  searchQuery: string;
+  activeCategory: Category;
+}
+
+export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
+  const [featuredIndex, setFeaturedIndex] = React.useState(0);
+  const featuredGames = GAMES.filter(g => g.featured);
+
+  React.useEffect(() => {
+    if (featuredGames.length <= 1) return;
+    
+    // Rotate every 10 minutes (600,000ms)
+    const interval = setInterval(() => {
+      setFeaturedIndex((prev) => (prev + 1) % featuredGames.length);
+    }, 600000);
+
+    return () => clearInterval(interval);
+  }, [featuredGames.length]);
+
+  const filteredGames = GAMES.filter((game) => {
+    const matchesSearch = game.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = activeCategory === 'all' || game.category === activeCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const featuredGame = featuredGames[featuredIndex];
+
+  return (
+    <div className="flex-1 p-8 overflow-x-hidden space-y-10">
+      {featuredGame && activeCategory === 'all' && (
+        <section>
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <span className="w-1.5 h-6 bg-violet-500 rounded-full"></span>
+            Featured Masterpiece
+          </h2>
+          <motion.div 
+            key={featuredGame.id}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative w-full h-[320px] rounded-2xl overflow-hidden group border border-white/10 shadow-2xl bg-slate-900"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/60 to-transparent z-10"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent z-10"></div>
+            
+            <img 
+              src={featuredGame.thumbnail} 
+              alt={featuredGame.title}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-60"
+            />
+
+            <div className="absolute inset-0 z-20 p-10 flex flex-col justify-end">
+              <div className="max-w-xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="px-2 py-0.5 bg-violet-600 text-[10px] font-bold rounded uppercase tracking-wider text-white">Trending</span>
+                  <span className="text-slate-300 text-xs font-semibold">{featuredGame.category}</span>
+                </div>
+                <h1 className="text-5xl font-black mb-3 tracking-tight text-white">{featuredGame.title}</h1>
+                <p className="text-slate-300 text-base mb-6 line-clamp-2 max-w-lg">
+                  {featuredGame.description}
+                </p>
+                <Link 
+                  to={`/play/${featuredGame.id}`}
+                  className="inline-flex px-8 py-3 bg-white text-slate-950 font-bold rounded-lg hover:scale-105 active:scale-95 transition-transform items-center gap-2"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="m7 4 12 8-12 8V4z"/></svg>
+                  Play Now
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+      )}
+
+      <section>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+            {activeCategory === 'all' ? 'Quick Plays' : `${activeCategory} Games`}
+          </h2>
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-white/5 border border-white/10 px-3 py-1 rounded-full">
+            {filteredGames.length} Missions
+          </div>
+        </div>
+        
+        {filteredGames.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {filteredGames.map((game) => (
+              <GameCard key={game.id} game={game} />
+            ))}
+          </div>
+        ) : (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center py-32 glass-card rounded-3xl text-slate-500"
+          >
+            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+               <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+            <p className="text-xl font-bold text-slate-400">Signal Lost</p>
+            <p className="text-sm mt-1">No matches found in the sector.</p>
+          </motion.div>
+        )}
+      </section>
+    </div>
+  );
+};
