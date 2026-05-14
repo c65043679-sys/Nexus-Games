@@ -46,16 +46,14 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="relative w-full h-[320px] rounded-2xl overflow-hidden group border border-white/10 shadow-2xl bg-slate-900"
+            className="relative w-full h-[320px] rounded-2xl overflow-hidden group border border-white/10 shadow-2xl"
+            style={{ backgroundColor: featuredGame.color }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/60 to-transparent z-10"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent z-10"></div>
             
-            <img 
-              src={featuredGame.thumbnail} 
-              alt={featuredGame.title}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-60"
-            />
+            <div className="absolute top-1/2 right-10 -translate-y-1/2 text-[180px] leading-none font-black text-white/10 select-none hidden lg:block uppercase tracking-tighter">
+              {featuredGame.title.charAt(0)}
+            </div>
 
             <div className="absolute inset-0 z-20 p-10 flex flex-col justify-end">
               <div className="max-w-xl">

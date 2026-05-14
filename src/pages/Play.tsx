@@ -109,7 +109,6 @@ export const Play: React.FC = () => {
           title={game.title}
           allowFullScreen
           allow={game.allow}
-          referrerPolicy="no-referrer"
           sandbox={game.sandbox || "allow-scripts allow-same-origin allow-popups allow-forms"}
         />
         
