@@ -129,8 +129,8 @@ export const Play: React.FC = () => {
           className="w-full h-full border-none"
           title={game.title}
           allowFullScreen
-          allow={game.allow}
-          sandbox={game.sandbox || "allow-scripts allow-same-origin allow-popups allow-forms"}
+          allow={game.allow || "autoplay; fullscreen; accelerometer; gyroscope; gamepad; pointer-lock"}
+          sandbox={game.sandbox || "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"}
         />
         
         {/* Fullscreen Overlay Button */}

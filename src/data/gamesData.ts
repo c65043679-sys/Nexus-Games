@@ -201,8 +201,8 @@ export const GAMES: Game[] = [
     iframe: "https://storage.y8.com/y8-studio/unity/joll/slope/?key=9757549&value=80527",
     controls: "Arrow keys or AD to steer.",
     rating: 4.7,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-popups allow-forms allow-same-origin allow-popups-to-escape-sandbox allow-downloads allow-storage-access-by-user-activation"
+    allow: "autoplay; fullscreen; accelerometer; gyroscope; gamepad; pointer-lock",
+    sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
   },
   {
     id: "space-waves",
@@ -274,7 +274,7 @@ export const GAMES: Game[] = [
     description: "A surreal meta-horror game parodying 90s edutainment. Collect notebooks and escape Baldi's school!",
     thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fbaldi-s-basics-in-education-and-learning%2F20201019173010%2Fbaldi-s-basics-in-education-and-learning-cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
     color: "#84cc16",
-    category: "Action",
+    category: "Puzzle",
     iframe: "https://baldisbasics.gitlab.io/file/",
     controls: "WASD to Move, Mouse to Look, Shift to Run, Space to Look Behind.",
     rating: 4.7,
@@ -306,5 +306,44 @@ export const GAMES: Game[] = [
     controls: "WASD or Arrow Keys to Move and Jump, X or L to shoot. Z or K for Super Shot.",
     rating: 4.7,
     allow: "fullscreen"
+  },
+  {
+    id: "tiny-fishing",
+    title: "Tiny Fishing",
+    description: "Cast your line, catch as many fish as possible, and upgrade your gear to reach deeper waters in this addictive fishing game.",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Ftiny-fishing%2F20201014111116%2Ftiny-fishing-cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#3b82f6",
+    category: "Arcade",
+    iframe: "https://html5.gamedistribution.com/5ee4b0222a474e44880b6c6d9f96754d/",
+    controls: "Mouse to cast and reel in fish.",
+    rating: 4.8,
+    allow: "autoplay; fullscreen; pointer-lock",
+    sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
+  },
+  {
+    id: "clicker-heroes",
+    title: "Clicker Heroes",
+    description: "The epic idle RPG where you defeat monsters, level up heroes, and reach incredible zones!",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fclicker-heroes_cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#f59e0b",
+    category: "Arcade",
+    iframe: "https://clickerheroes.com/",
+    controls: "Left click to attack and buy upgrades.",
+    rating: 4.9,
+    allow: "autoplay; fullscreen; pointer-lock",
+    sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
+  },
+  {
+    id: "friday-night-funkin",
+    title: "Friday Night Funkin'",
+    description: "The rhythmic sensation where you battle in musical duels! Hit the keys to the beat and impress the girlfriend.",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Ffriday-night-funkin_cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#ec4899",
+    category: "Arcade",
+    iframe: "/fnf.html",
+    controls: "WASD or Arrow Keys to hit the notes.",
+    rating: 4.9,
+    allow: "autoplay; fullscreen; pointer-lock",
+    sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
   }
 ];
