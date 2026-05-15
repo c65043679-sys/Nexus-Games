@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, signInWithCredential } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -22,6 +22,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   useEffect(() => {
+    // Expose handleCredentialResponse to window for GSI callback
+    (window as any).handleCredentialResponse = async (response: any) => {
+      try {
+        // Decode the secret token Google sends back (as requested by user)
+        if ((window as any).jwt_decode) {
+          const userToken = (window as any).jwt_decode(response.credential);
+          console.log("GSI User decoded:", userToken);
+          
+          // Save their name in the browser as requested
+          localStorage.setItem("username", userToken.name);
+          localStorage.setItem("userpic", userToken.picture);
+        }
+
+        const credential = GoogleAuthProvider.credential(response.credential);
+        await signInWithCredential(auth, credential);
+      } catch (err) {
+        console.error("GSI Login Error:", err);
+      }
+    };
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         // Sync user profile to Firestore
@@ -55,6 +75,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setIsAdmin(false);
     sessionStorage.removeItem('isAdmin');
+    localStorage.removeItem("username");
+    localStorage.removeItem("userpic");
     return signOut(auth);
   };
 
