@@ -23,7 +23,9 @@ export const GAMES: Game[] = [
     category: "Arcade",
     iframe: "https://firebasestorage.googleapis.com/v0/b/classroomx/o/mcc.html?alt=media&token=928a934d-e7b5-4105-93f0-f8248ba099d4",
     controls: "WASD to Move, Left Click to Mine/Build, Right Click to toggle block type",
-    rating: 4.9
+    rating: 4.9,
+    allow: "fullscreen; gamepad; gyroscope; accelerometer; clipboard-read; clipboard-write",
+    sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
   },
   {
     id: "basket-random",
@@ -69,10 +71,10 @@ export const GAMES: Game[] = [
     thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2F2v2-io%2F20231110111116%2F2v2-io-cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
     color: "#6366f1",
     category: "Action",
-    iframe: "https://games.crazygames.com/en_US/2v2-io/index.html?v=1.357",
+    iframe: "https://2v2.io/",
     controls: "WASD to Move, Left Click to Build/Shoot, Space to Jump.",
     rating: 4.5,
-    allow: "autoplay; payment; fullscreen; microphone; focus-without-user-activation *; screen-wake-lock; gamepad; clipboard-read; clipboard-write; accelerometer; gyroscope;",
+    allow: "autoplay; fullscreen; gamepad",
     sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
   },
   {
@@ -173,5 +175,42 @@ export const GAMES: Game[] = [
     rating: 4.8,
     allow: "autoplay; fullscreen; camera; focus-without-user-activation *; monetization; gamepad; keyboard-map *; xr-spatial-tracking; clipboard-write",
     sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-scripts allow-same-origin allow-downloads"
+  },
+  {
+    id: "winter-clash-3d",
+    title: "Winter Clash 3D",
+    description: "A festive Christmas-themed 3D shooter. Join the battle and capture the snowman!",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fwinter-clash-3d_cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#38bdf8",
+    category: "Action",
+    iframe: "https://clash3d.com/embed/winter/",
+    controls: "WASD to Move, Left Click to Shoot, Space to Jump.",
+    rating: 4.8,
+    allow: "fullscreen"
+  },
+  {
+    id: "slope",
+    title: "Slope",
+    description: "Navigate a ball through a 3D obstacle course in this fast-paced arcade game. Stay on the track!",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fslope_cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#22c55e",
+    category: "Arcade",
+    iframe: "https://storage.y8.com/y8-studio/unity/joll/slope/?key=9757549&value=80527",
+    controls: "Arrow keys or AD to steer.",
+    rating: 4.7,
+    allow: "autoplay; fullscreen",
+    sandbox: "allow-scripts allow-popups allow-forms allow-same-origin allow-popups-to-escape-sandbox allow-downloads allow-storage-access-by-user-activation"
+  },
+  {
+    id: "space-waves",
+    title: "Space Waves",
+    description: "Navigate through challenging cosmic waves in this intense arcade game. Test your reflexes and survive the space journey!",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fspace-waves%2F20231110111116%2Fspace-waves-cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#a855f7",
+    category: "Arcade",
+    iframe: "https://jasongamesdev.github.io/space-waves/",
+    controls: "Space or Click to jump.",
+    rating: 4.8,
+    allow: "fullscreen"
   }
 ];
