@@ -4,6 +4,7 @@ import { Game, Category } from '../types';
 import { GameCard } from '../components/GameCard';
 import { GAMES } from '../data/gamesData';
 import { motion } from 'motion/react';
+import { useAuth } from '../components/AuthContext';
 
 interface HomeProps {
   searchQuery: string;
@@ -11,6 +12,7 @@ interface HomeProps {
 }
 
 export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
+  const { profile } = useAuth();
   const featuredGames = React.useMemo(() => GAMES.filter(g => g.featured), []);
   const [featuredIndex, setFeaturedIndex] = React.useState(() => 
     Math.floor(Math.random() * featuredGames.length)
@@ -29,7 +31,16 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
 
   const filteredGames = GAMES.filter((game) => {
     const matchesSearch = game.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || game.category === activeCategory;
+    
+    let matchesCategory = false;
+    if (activeCategory === 'all') {
+      matchesCategory = true;
+    } else if (activeCategory === 'Favorites') {
+      matchesCategory = profile?.favorites?.includes(game.id) || false;
+    } else {
+      matchesCategory = game.category === activeCategory;
+    }
+    
     return matchesSearch && matchesCategory;
   });
 

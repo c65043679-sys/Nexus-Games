@@ -5,8 +5,8 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --color-bg-dark: #020617;
   --color-bg-card: rgba(255, 255, 255, 0.05);
-  --color-accent: #8b5cf6;
-  --color-accent-hover: #7c3aed;
+  --color-accent: var(--accent, #8b5cf6);
+  --color-accent-hover: var(--accent-hover, #7c3aed);
   --color-glass-border: rgba(255, 255, 255, 0.1);
 }
 
@@ -38,7 +38,8 @@
   left: -5%;
   width: 400px;
   height: 400px;
-  background: rgba(139, 92, 246, 0.15);
+  background: var(--accent, #8b5cf6);
+  opacity: 0.15;
   border-radius: 50%;
   filter: blur(120px);
   pointer-events: none;

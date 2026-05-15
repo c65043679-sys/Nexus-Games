@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Info, Gamepad2, Star, Maximize2, Save, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Info, Gamepad2, Star, Maximize2, Save, CheckCircle2, Heart } from 'lucide-react';
 import { GAMES } from '../data/gamesData';
 import { motion } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
@@ -9,11 +9,19 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export const Play: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, profile, toggleFavorite } = useAuth();
   const game = GAMES.find((g) => g.id === id);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const isFavorited = profile?.favorites?.includes(game?.id || '');
+
+  const handleToggleFavorite = async () => {
+    if (game?.id) {
+      await toggleFavorite(game.id);
+    }
+  };
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -77,8 +85,20 @@ export const Play: React.FC = () => {
         </Link>
         <div className="flex items-center gap-4">
           {user && (
-            <button
-              onClick={handleSaveData}
+            <>
+              <button
+                onClick={handleToggleFavorite}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border ${
+                  isFavorited 
+                    ? 'bg-rose-500/20 border-rose-500/30 text-rose-500' 
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${isFavorited ? 'fill-current' : ''}`} />
+                {isFavorited ? 'Favorited' : 'Favorite'}
+              </button>
+              <button
+                onClick={handleSaveData}
               disabled={isSaving}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border ${
                 saveSuccess 
@@ -95,9 +115,10 @@ export const Play: React.FC = () => {
               )}
               {saveSuccess ? 'Progress Saved' : 'Save Status'}
             </button>
-          )}
-        </div>
+          </>
+        )}
       </div>
+    </div>
 
       <div 
         ref={containerRef}

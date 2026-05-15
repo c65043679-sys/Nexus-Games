@@ -8,7 +8,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
-  const { user, signIn } = useAuth();
+  const { user, profile, signIn } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between h-[72px] px-8 bg-bg-dark/60 backdrop-blur-xl border-b border-white/10">
@@ -34,26 +34,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
       </div>
 
       <nav className="flex items-center gap-6">
-        <button className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
-          <Heart className="w-5 h-5" />
-          <span className="text-sm font-medium">Favorites</span>
-        </button>
-        
         {user ? (
           <div className="flex items-center gap-3">
             <div className="hidden sm:block text-right">
-              <p className="text-xs font-bold text-white leading-none mb-1">{user.displayName}</p>
+              <p className="text-xs font-bold text-white leading-none mb-1">{profile?.nickname || user.displayName}</p>
               <p className="text-[10px] text-slate-500 leading-none">Nexus Member</p>
             </div>
-            <div className="w-10 h-10 rounded-full border-2 border-violet-500/30 overflow-hidden bg-slate-800 cursor-pointer hover:border-violet-500 transition-colors">
+            <Link to="/settings" className="w-10 h-10 rounded-full border-2 border-violet-500/30 overflow-hidden bg-slate-800 cursor-pointer hover:border-violet-500 transition-colors">
               {user.photoURL ? (
-                <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <img src={user.photoURL} alt={profile?.nickname || user.displayName || ''} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500 to-blue-500">
                    <UserIcon className="w-5 h-5 text-white" />
                 </div>
               )}
-            </div>
+            </Link>
           </div>
         ) : (
           <button 
