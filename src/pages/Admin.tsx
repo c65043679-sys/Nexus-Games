@@ -21,7 +21,7 @@ import { GAMES } from '../data/gamesData';
 import { Link } from 'react-router-dom';
 
 export const Admin: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, isAdmin, loginAsAdmin, loading } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalSaves: 0,
@@ -30,9 +30,8 @@ export const Admin: React.FC = () => {
   });
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Simple admin check based on the email provided in context
-  const isAdmin = user?.email === 'c65043679@gmail.com';
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (isAdmin) {
@@ -40,18 +39,24 @@ export const Admin: React.FC = () => {
     }
   }, [isAdmin]);
 
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginAsAdmin(password)) {
+      setError('');
+    } else {
+      setError('Invalid system access code.');
+      setPassword('');
+    }
+  };
+
   const fetchAdminData = async () => {
     setIsRefreshing(true);
     try {
-      // In a real app, you'd have an admin-only stats collection or use cloud functions
-      // Here we fetch some real data from the collections we have
       const usersSnap = await getDocs(query(collection(db, 'users'), limit(5)));
       setRecentUsers(usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       
-      // We can't easily count all docs in a large collection client-side efficiently, 
-      // but for this scale it's fine to show actual counts if small.
       setStats({
-        totalUsers: 1420 + usersSnap.size, // Mocked base + real
+        totalUsers: 1420 + usersSnap.size,
         totalSaves: 8540,
         activeSystems: 12,
         databaseHealth: 'Stable'
@@ -70,7 +75,61 @@ export const Admin: React.FC = () => {
   );
 
   if (!isAdmin) {
-    return <Navigate to="/" replace />;
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden"
+        >
+          {/* Background Highlight */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="relative z-10">
+            <div className="w-16 h-16 bg-violet-600/20 rounded-2xl flex items-center justify-center mb-6 border border-violet-500/20">
+              <ShieldAlert className="w-8 h-8 text-violet-400" />
+            </div>
+            
+            <h1 className="text-2xl font-black text-white mb-2">Restricted Access</h1>
+            <p className="text-slate-400 text-sm mb-8">Enter the master administrative password to unlock system controls.</p>
+            
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter Passcode..."
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all font-mono tracking-widest"
+                  autoFocus
+                />
+                {error && (
+                  <p className="text-red-400 text-xs mt-2 font-bold flex items-center gap-1">
+                    <ShieldAlert className="w-3 h-3" />
+                    {error}
+                  </p>
+                )}
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-violet-600/20 transition-all flex items-center justify-center gap-2 group"
+              >
+                Authenticate
+                <Save className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </form>
+
+            <Link 
+              to="/"
+              className="block text-center text-slate-500 hover:text-white text-xs mt-6 transition-colors font-medium border-t border-white/5 pt-6"
+            >
+              Return to Terminal
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    );
   }
 
   return (

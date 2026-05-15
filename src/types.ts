@@ -14,4 +14,4 @@ export interface Game {
   sandbox?: string;
 }
 
-export type Category = 'all' | 'Action' | 'Racing' | 'Arcade' | 'Puzzle';
+export type Category = 'all' | 'Action' | 'Racing' | 'Arcade' | 'Puzzle' | 'Horror';

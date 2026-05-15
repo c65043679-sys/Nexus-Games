@@ -24,6 +24,7 @@ export const GAMES: Game[] = [
     iframe: "https://firebasestorage.googleapis.com/v0/b/classroomx/o/mcc.html?alt=media&token=928a934d-e7b5-4105-93f0-f8248ba099d4",
     controls: "WASD to Move, Left Click to Mine/Build, Right Click to toggle block type",
     rating: 4.9,
+    featured: true,
     allow: "fullscreen; gamepad; gyroscope; accelerometer; clipboard-read; clipboard-write",
     sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
   },
@@ -109,6 +110,7 @@ export const GAMES: Game[] = [
     iframe: "https://gertdoro.github.io/3hg7dj3bnc82/index.html",
     controls: "Arrow keys or WASD to move and jump/roll.",
     rating: 4.9,
+    featured: true,
     sandbox: "allow-scripts allow-popups allow-forms allow-same-origin allow-popups-to-escape-sandbox allow-downloads allow-storage-access-by-user-activation"
   },
   {
@@ -173,6 +175,7 @@ export const GAMES: Game[] = [
     iframe: "https://classroom-6x-online.github.io/g14/moto-x3m-3/",
     controls: "Arrow keys to drive and balance.",
     rating: 4.8,
+    featured: true,
     allow: "autoplay; fullscreen; camera; focus-without-user-activation *; monetization; gamepad; keyboard-map *; xr-spatial-tracking; clipboard-write",
     sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-scripts allow-same-origin allow-downloads"
   },
@@ -231,9 +234,65 @@ export const GAMES: Game[] = [
     description: "A petrifyingly scary adventure through your abductive grandma's house at night...",
     thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fgames%2Fpixel-monsters%2Fcover-1655194301550.png%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
     color: "#d946ef",
-    category: "Puzzle",
+    category: "Horror",
     iframe: "https://games.yoplay.io/granny-horror/",
     controls: "Use mouse and keyboard to interact.",
-    rating: 4.5
+    rating: 4.5,
+    featured: true,
+    allow: "fullscreen; pointer-lock",
+    sandbox: "allow-forms allow-modals allow-same-origin allow-scripts allow-pointer-lock allow-orientation-lock allow-presentation allow-downloads"
+  },
+  {
+    id: "eaglercraft",
+    title: "Eaglercraft",
+    description: "A web-based version of Minecraft 1.8. Play the full game in your browser with multiplayer support!",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Feaglercraft%2F20230524101010%2Feaglercraft-cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#4ade80",
+    category: "Arcade",
+    iframe: "https://sd592g.github.io/zj684od4lfg/",
+    controls: "WASD to Move, Left Click to Mine/Build, E for Inventory, Space to Jump, Esc for Menu.",
+    rating: 4.9,
+    featured: true,
+    allow: "fullscreen; pointer-lock",
+    sandbox: "allow-forms allow-modals allow-same-origin allow-scripts allow-pointer-lock allow-orientation-lock allow-presentation allow-downloads"
+  },
+  {
+    id: "head-soccer-2024",
+    title: "Head Soccer 2024",
+    description: "Choose your favorite player and compete in intense soccer matches with unique head-to-head gameplay. Fast-paced sports action at its best!",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fhead-soccer-2024%2Fcover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#3b82f6",
+    category: "Sports",
+    iframe: "https://azgames.io/head-soccer-2024.embed",
+    controls: "WASD or Arrow Keys to Move and Jump, X or L to shoot.",
+    rating: 4.6,
+    allow: "fullscreen"
+  },
+  {
+    id: "baldis-basics",
+    title: "Baldi's Basics",
+    description: "A surreal meta-horror game parodying 90s edutainment. Collect notebooks and escape Baldi's school!",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fbaldi-s-basics-in-education-and-learning%2F20201019173010%2Fbaldi-s-basics-in-education-and-learning-cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#84cc16",
+    category: "Action",
+    iframe: "https://baldisbasics.gitlab.io/file/",
+    controls: "WASD to Move, Mouse to Look, Shift to Run, Space to Look Behind.",
+    rating: 4.7,
+    allow: "fullscreen; pointer-lock",
+    sandbox: "allow-scripts allow-popups allow-forms allow-same-origin allow-popups-to-escape-sandbox allow-downloads allow-storage-access-by-user-activation allow-pointer-lock"
+  },
+  {
+    id: "fnaf-1",
+    title: "Five Nights at Freddy's",
+    description: "Survive five nights at Freddy Fazbear's Pizza while avoiding the animatronic characters. A legendary horror experience.",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Ffive-nights-at-freddy-s%2F20210211111116%2Ffive-nights-at-freddy-s-cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#450a0a",
+    category: "Horror",
+    iframe: "https://run3.io/popgame/fnaf/fnaf1/",
+    controls: "Mouse to look around and interact with doors/lights/camera.",
+    rating: 4.8,
+    featured: true,
+    allow: "fullscreen; pointer-lock",
+    sandbox: "allow-forms allow-modals allow-same-origin allow-scripts allow-pointer-lock allow-orientation-lock allow-presentation allow-downloads"
   }
 ];

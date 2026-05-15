@@ -11,8 +11,10 @@ interface HomeProps {
 }
 
 export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
-  const [featuredIndex, setFeaturedIndex] = React.useState(0);
-  const featuredGames = GAMES.filter(g => g.featured);
+  const featuredGames = React.useMemo(() => GAMES.filter(g => g.featured), []);
+  const [featuredIndex, setFeaturedIndex] = React.useState(() => 
+    Math.floor(Math.random() * featuredGames.length)
+  );
 
   React.useEffect(() => {
     if (featuredGames.length <= 1) return;
