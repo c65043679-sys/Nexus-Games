@@ -212,5 +212,28 @@ export const GAMES: Game[] = [
     controls: "Space or Click to jump.",
     rating: 4.8,
     allow: "fullscreen"
+  },
+  {
+    id: "airport-clash-3d",
+    title: "Airport Clash 3D",
+    description: "Join the battle in this high-octane 3D shooter set in a desert airport. Team up, capture the enemy flag, and dominate the airfield!",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fairport-clash-3d_cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#0ea5e9",
+    category: "Action",
+    iframe: "https://clash3d.com/embed/airport/",
+    controls: "WASD to Move, Left Click to Shoot, Space to Jump.",
+    rating: 4.8,
+    allow: "fullscreen"
+  },
+  {
+    id: "Granny",
+    title: "Scary Grandma 3D",
+    description: "A petrifyingly scary adventure through your abductive grandma's house at night...",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fgames%2Fpixel-monsters%2Fcover-1655194301550.png%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#d946ef",
+    category: "Puzzle",
+    iframe: "https://games.yoplay.io/granny-horror/",
+    controls: "Use mouse and keyboard to interact.",
+    rating: 4.5
   }
 ];
