@@ -294,5 +294,17 @@ export const GAMES: Game[] = [
     featured: true,
     allow: "fullscreen; pointer-lock",
     sandbox: "allow-forms allow-modals allow-same-origin allow-scripts allow-pointer-lock allow-orientation-lock allow-presentation allow-downloads"
+  },
+  {
+    id: "soccer-legends",
+    title: "Soccer Legends",
+    description: "Battle it out on the pitch in this legendary soccer game! Choose your team and lead them to glory with super moves and tactical play.",
+    thumbnail: "https://images.weserv.nl/?url=https%3A%2F%2Fimages.crazygames.com%2Fsoccer-legends%2Fcover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop",
+    color: "#10b981",
+    category: "Sports",
+    iframe: "https://soccerlegends.github.io/soccer-legends",
+    controls: "WASD or Arrow Keys to Move and Jump, X or L to shoot. Z or K for Super Shot.",
+    rating: 4.7,
+    allow: "fullscreen"
   }
 ];

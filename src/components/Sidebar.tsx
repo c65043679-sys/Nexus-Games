@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, ShieldCheck, Skull } from 'lucide-react';
+import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, ShieldCheck, Skull, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Category } from '../types';
 import { useAuth } from './AuthContext';
@@ -16,6 +16,7 @@ const CATEGORIES: { id: Category; name: string; icon: React.ReactNode }[] = [
   { id: 'Arcade', name: 'Arcade', icon: <Gamepad className="w-5 h-5" /> },
   { id: 'Puzzle', name: 'Puzzle', icon: <Puzzle className="w-5 h-5" /> },
   { id: 'Horror', name: 'Horror', icon: <Skull className="w-5 h-5" /> },
+  { id: 'Sports', name: 'Sports', icon: <Trophy className="w-5 h-5" /> },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChange }) => {
