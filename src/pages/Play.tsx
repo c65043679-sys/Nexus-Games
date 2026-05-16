@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, Info, Gamepad2, Star, Maximize2, Save, CheckCircle2, Heart } from 'lucide-react';
 import { GAMES } from '../data/gamesData';
@@ -12,6 +12,7 @@ export const Play: React.FC = () => {
   const { user, profile, toggleFavorite } = useAuth();
   const game = GAMES.find((g) => g.id === id);
   const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -122,11 +123,26 @@ export const Play: React.FC = () => {
 
       <div 
         ref={containerRef}
-        className="relative aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-white/10 group/player"
+        className={`relative bg-black rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-white/10 group/player ${
+          game.aspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto' : 
+          game.aspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto' : 
+          'aspect-video'
+        }`}
       >
         <iframe
+          ref={iframeRef}
           src={game.iframe}
           className="w-full h-full border-none"
+          style={{ 
+            transform: game.scale ? `scale(${game.scale})` : 'none',
+            transformOrigin: 'center center',
+            width: game.scale ? `${100 / game.scale}%` : '100%',
+            height: game.scale ? `${100 / game.scale}%` : '100%',
+            position: game.scale ? 'absolute' : 'relative',
+            left: game.scale ? '50%' : 'auto',
+            top: game.scale ? '50%' : 'auto',
+            translate: game.scale ? '-50% -50%' : 'none'
+          }}
           title={game.title}
           allowFullScreen
           allow={game.allow || "autoplay; fullscreen; accelerometer; gyroscope; gamepad; pointer-lock"}
@@ -153,7 +169,7 @@ export const Play: React.FC = () => {
                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Browser Environment</span>
             </div>
           </div>
-          <p className="text-slate-400 leading-relaxed text-lg font-medium">
+            <p className="text-slate-400 leading-relaxed text-lg font-medium">
             {game.description}
           </p>
         </div>

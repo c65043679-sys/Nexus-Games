@@ -12,6 +12,8 @@ export interface Game {
   rating: number;
   allow?: string;
   sandbox?: string;
+  scale?: number;
+  aspectRatio?: 'video' | 'portrait' | 'square';
 }
 
 export type Category = 'all' | 'Action' | 'Racing' | 'Arcade' | 'Puzzle' | 'Horror' | 'Sports' | 'Favorites';
