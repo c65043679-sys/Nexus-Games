@@ -14,6 +14,7 @@ export interface Game {
   sandbox?: string;
   scale?: number;
   aspectRatio?: 'video' | 'portrait' | 'square';
+  isBlocked?: boolean;
 }
 
-export type Category = 'all' | 'Action' | 'Racing' | 'Arcade' | 'Puzzle' | 'Horror' | 'Sports' | 'Favorites';
+export type Category = 'all' | 'Action' | 'Racing' | 'Arcade' | 'Puzzle' | 'Horror' | 'Sports' | 'Favorites' | 'Blocked' | 'Unblocked';

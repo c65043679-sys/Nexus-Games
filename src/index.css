@@ -20,6 +20,17 @@
   scrollbar-color: #1e293b #020617;
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 .glass {
   background: rgba(2, 6, 23, 0.6);
   backdrop-filter: blur(16px);

@@ -37,6 +37,10 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
       matchesCategory = true;
     } else if (activeCategory === 'Favorites') {
       matchesCategory = profile?.favorites?.includes(game.id) || false;
+    } else if (activeCategory === 'Blocked') {
+      matchesCategory = game.isBlocked || false;
+    } else if (activeCategory === 'Unblocked') {
+      matchesCategory = !game.isBlocked;
     } else {
       matchesCategory = game.category === activeCategory;
     }
@@ -44,11 +48,14 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
     return matchesSearch && matchesCategory;
   });
 
+  const blockedGames = React.useMemo(() => filteredGames.filter(g => g.isBlocked), [filteredGames]);
+  const unblockedGames = React.useMemo(() => filteredGames.filter(g => !g.isBlocked), [filteredGames]);
+
   const featuredGame = featuredGames[featuredIndex];
 
   return (
-    <div className="flex-1 p-8 overflow-x-hidden space-y-10">
-      {featuredGame && activeCategory === 'all' && (
+    <div className="flex-1 p-8 overflow-x-hidden space-y-12">
+      {featuredGame && activeCategory === 'all' && !searchQuery && (
         <section>
           <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
             <span className="w-1.5 h-6 bg-violet-500 rounded-full"></span>
@@ -62,9 +69,16 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
             className="relative w-full h-[320px] rounded-2xl overflow-hidden group border border-white/10 shadow-2xl"
             style={{ backgroundColor: featuredGame.color }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/60 to-transparent z-10"></div>
+            {featuredGame.thumbnail && (
+              <img 
+                src={featuredGame.thumbnail} 
+                alt="" 
+                className="absolute inset-0 w-full h-full object-cover" 
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10"></div>
             
-            <div className="absolute top-1/2 right-10 -translate-y-1/2 text-[180px] leading-none font-black text-white/10 select-none hidden lg:block uppercase tracking-tighter">
+            <div className="absolute top-1/2 right-10 -translate-y-1/2 text-[180px] leading-none font-black text-white/5 select-none hidden lg:block uppercase tracking-tighter z-10">
               {featuredGame.title.charAt(0)}
             </div>
 
@@ -91,37 +105,75 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
         </section>
       )}
 
-      <section>
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
-            {activeCategory === 'all' ? 'Quick Plays' : `${activeCategory} Games`}
-          </h2>
-          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-white/5 border border-white/10 px-3 py-1 rounded-full">
-            {filteredGames.length} Missions
-          </div>
-        </div>
-        
-        {filteredGames.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {filteredGames.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-32 glass-card rounded-3xl text-slate-500"
-          >
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-               <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      {activeCategory === 'all' && !searchQuery ? (
+        <>
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <span className="w-1.5 h-6 bg-red-500 rounded-full"></span>
+                Blocked Sector
+              </h2>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-white/5 border border-white/10 px-3 py-1 rounded-full">
+                {blockedGames.length} Missions 
+              </div>
             </div>
-            <p className="text-xl font-bold text-slate-400">Signal Lost</p>
-            <p className="text-sm mt-1">No matches found in the sector.</p>
-          </motion.div>
-        )}
-      </section>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {blockedGames.map((game) => (
+                <GameCard key={game.id} game={game} />
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <span className="w-1.5 h-6 bg-green-500 rounded-full"></span>
+                Unblocked Sector
+              </h2>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-white/5 border border-white/10 px-3 py-1 rounded-full">
+                {unblockedGames.length} Missions
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {unblockedGames.map((game) => (
+                <GameCard key={game.id} game={game} />
+              ))}
+            </div>
+          </section>
+        </>
+      ) : (
+        <section>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+              {activeCategory === 'all' ? 'Quick Plays' : `${activeCategory} Games`}
+            </h2>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-white/5 border border-white/10 px-3 py-1 rounded-full">
+              {filteredGames.length} Missions
+            </div>
+          </div>
+          
+          {filteredGames.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {filteredGames.map((game) => (
+                <GameCard key={game.id} game={game} />
+              ))}
+            </div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-32 glass-card rounded-3xl text-slate-500"
+            >
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                 <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+              <p className="text-xl font-bold text-slate-400">Signal Lost</p>
+              <p className="text-sm mt-1">No matches found in the sector.</p>
+            </motion.div>
+          )}
+        </section>
+      )}
     </div>
   );
 };
