@@ -41,13 +41,14 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
       </button>
 
       <Link to={`/play/${game.id}`} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden flex items-center justify-center transition-all duration-500 group-hover:scale-105" style={{ backgroundColor: game.color }}>
+        <div className="relative aspect-[800/517] overflow-hidden flex items-center justify-center transition-all duration-500 group-hover:scale-105" style={{ backgroundColor: game.color }}>
           {game.thumbnail ? (
             <img 
               src={game.thumbnail} 
               alt={game.title}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover animate-fade-in"
               loading="lazy"
+              referrerPolicy="no-referrer"
             />
           ) : (
             <span className="text-4xl font-black text-white/40 group-hover:text-white/60 transition-colors select-none">

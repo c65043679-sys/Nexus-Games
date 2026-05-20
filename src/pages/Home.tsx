@@ -69,13 +69,7 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
             className="relative w-full h-[320px] rounded-2xl overflow-hidden group border border-white/10 shadow-2xl"
             style={{ backgroundColor: featuredGame.color }}
           >
-            {featuredGame.thumbnail && (
-              <img 
-                src={featuredGame.thumbnail} 
-                alt="" 
-                className="absolute inset-0 w-full h-full object-cover" 
-              />
-            )}
+            {/* Solid color background banner as requested, without thumbnail */}
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10"></div>
             
             <div className="absolute top-1/2 right-10 -translate-y-1/2 text-[180px] leading-none font-black text-white/5 select-none hidden lg:block uppercase tracking-tighter z-10">

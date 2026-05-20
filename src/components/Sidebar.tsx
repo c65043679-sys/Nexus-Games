@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, ShieldCheck, Skull, Trophy, Star, Settings, Lock, Unlock } from 'lucide-react';
+import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, Skull, Trophy, Star, Settings, Lock, Unlock } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Category } from '../types';
 import { useAuth } from './AuthContext';
@@ -121,19 +121,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
             </div>
           )}
 
-          <div className="pt-4 border-t border-white/5">
-            <Link 
-              to="/admin"
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all shadow-lg ${
-                isAdmin 
-                  ? 'bg-violet-600/20 text-violet-300 border border-violet-500/20 hover:bg-violet-600/30' 
-                  : 'text-slate-500 hover:text-slate-300 hover:bg-white/5 border border-transparent'
-              }`}
-            >
-              <ShieldCheck className="w-5 h-5" />
-              <span className="text-sm font-bold">Admin Console</span>
-            </Link>
-          </div>
         </div>
       </div>
     </aside>

@@ -4,7 +4,6 @@ import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { Home } from './pages/Home';
 import { Play } from './pages/Play';
-import { Admin } from './pages/Admin';
 import { Settings } from './pages/Settings';
 import { Category } from './types';
 import { AuthProvider, useAuth } from './components/AuthContext';
@@ -53,7 +52,6 @@ function AppContent() {
                   } 
                 />
                 <Route path="/play/:id" element={<Play />} />
-                <Route path="/admin" element={<Admin />} />
                 <Route path="/settings" element={<Settings />} />
               </Routes>
             </div>

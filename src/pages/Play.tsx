@@ -236,7 +236,7 @@ export const Play: React.FC = () => {
               <Link 
                 key={relatedGame.id} 
                 to={`/play/${relatedGame.id}`}
-                className="group relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-900 border border-white/5 transition-all duration-300 hover:scale-[1.02] hover:z-10 hover:shadow-2xl hover:shadow-black/50"
+                className="group relative aspect-[800/517] rounded-xl overflow-hidden bg-slate-900 border border-white/5 transition-all duration-300 hover:scale-[1.02] hover:z-10 hover:shadow-2xl hover:shadow-black/50"
                 title={relatedGame.title}
               >
                 {/* Background color based on game color */}
@@ -244,9 +244,19 @@ export const Play: React.FC = () => {
                   className="w-full h-full flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:brightness-125"
                   style={{ backgroundColor: relatedGame.color }}
                 >
-                  <span className="text-2xl font-black text-white/20 select-none transition-opacity group-hover:opacity-40">
-                    {relatedGame.title.charAt(0).toUpperCase()}
-                  </span>
+                  {relatedGame.thumbnail ? (
+                    <img 
+                      src={relatedGame.thumbnail} 
+                      alt={relatedGame.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="text-2xl font-black text-white/20 select-none transition-opacity group-hover:opacity-40">
+                      {relatedGame.title.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
 
                 {/* Shine Sweep Effect */}
