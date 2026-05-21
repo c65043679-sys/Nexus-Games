@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, Heart, User as UserIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 interface NavbarProps {
@@ -9,6 +9,8 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
   const { user, profile, signIn } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between h-[72px] px-8 bg-bg-dark/60 backdrop-blur-xl border-b border-white/10">
@@ -29,7 +31,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
           type="text"
           placeholder="Search games..."
           className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-violet-500/50 text-sm transition-all text-white placeholder-slate-400"
-          onChange={(e) => onSearch(e.target.value)}
+          onChange={(e) => {
+            onSearch(e.target.value);
+            if (location.pathname !== '/') {
+              navigate('/');
+            }
+          }}
         />
       </div>
 

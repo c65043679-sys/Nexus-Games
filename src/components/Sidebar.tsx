@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, Skull, Trophy, Star, Settings, Lock, Unlock } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Category } from '../types';
 import { useAuth } from './AuthContext';
 
@@ -25,6 +25,7 @@ const CATEGORIES: { id: Category; name: string; icon: React.ReactNode }[] = [
 export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChange }) => {
   const { user, profile, signIn, logout, isAdmin } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <aside className="w-[240px] shrink-0 hidden md:flex flex-col p-6 border-r border-white/10 bg-slate-900/40 backdrop-blur-md min-h-screen gap-8">
@@ -36,7 +37,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
             return (
               <li
                 key={cat.id}
-                onClick={() => onCategoryChange(cat.id)}
+                onClick={() => {
+                  onCategoryChange(cat.id);
+                  if (location.pathname !== '/') {
+                    navigate('/');
+                  }
+                }}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all cursor-pointer ${
                   isActive
                     ? 'bg-violet-600/20 text-violet-300 border-violet-500/20'
