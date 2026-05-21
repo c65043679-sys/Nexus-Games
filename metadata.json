@@ -2,5 +2,5 @@
   "name": "Nexus Games",
   "description": "A modern, high-performance browser gaming platform featuring low-poly racing, arcade, and puzzle games.",
   "requestFramePermissions": ["camera", "microphone", "geolocation", "accelerometer", "gyroscope"],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
