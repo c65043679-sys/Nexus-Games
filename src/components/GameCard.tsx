@@ -27,6 +27,8 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.03, y: -4 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className="group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-violet-500/50 transition-all shadow-lg hover:shadow-violet-500/10"
     >
       <button 
