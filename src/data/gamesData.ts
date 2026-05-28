@@ -497,5 +497,18 @@ export const GAMES: Game[] = [
     rating: 4.9,
     allow: "autoplay; fullscreen",
     sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+  },
+  {
+    id: "soccer-random",
+    title: "Soccer Random",
+    description: "Unpredictable football fun with hilarious physics! Jump, kick, and score crazy goals using only one control key.",
+    thumbnail: "/images/soccer-random.jpg",
+    color: "#059669",
+    category: "Sports",
+    iframe: "https://soccer-randomx.github.io/soccer-random/",
+    controls: "W or Up Arrow key to jump and kick.",
+    rating: 4.8,
+    allow: "autoplay; fullscreen",
+    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
   }
 ];

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, Skull, Trophy, Star, Settings, Lock, Unlock } from 'lucide-react';
+import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, Skull, Trophy, Star, Settings, Lock, Unlock, History } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Category } from '../types';
 import { useAuth } from './AuthContext';
@@ -62,11 +62,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
       </div>
 
       <div className="mt-auto pt-6 border-t border-white/5">
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 text-center cursor-default">
-          Nexus v2.4.0
-        </p>
+        <Link 
+          to="/updates"
+          className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 block text-center hover:text-violet-400 transition-colors cursor-pointer"
+        >
+          Nexus v2.6.0
+        </Link>
         
-        <div className="space-y-4 mt-4">
+        <div className="space-y-2 mt-4">
+          <Link 
+            to="/updates"
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+              location.pathname === '/updates'
+                ? 'bg-violet-600/20 text-violet-300 border-violet-500/20'
+                : 'text-slate-400 border border-transparent hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <History className="w-5 h-5" />
+            <span className="text-sm font-medium">System Updates</span>
+          </Link>
+
           {user && (
             <Link 
               to="/settings"
