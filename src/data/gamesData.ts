@@ -155,6 +155,7 @@ export const GAMES: Game[] = [
     iframe: "https://escapewaves.io/?crazygames=true",
     controls: "WASD or Arrow Keys to move.",
     rating: 4.7,
+    isBlocked: true,
     allow: "accelerometer; gyroscope; autoplay; payment; fullscreen; microphone; clipboard-read; clipboard-write",
     sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups-to-escape-sandbox"
   },
@@ -263,6 +264,7 @@ export const GAMES: Game[] = [
     controls: "Use mouse and keyboard to interact.",
     rating: 4.5,
     featured: true,
+    isBlocked: true,
     allow: "fullscreen; pointer-lock",
     sandbox: "allow-forms allow-modals allow-same-origin allow-scripts allow-pointer-lock allow-orientation-lock allow-presentation allow-downloads"
   },
@@ -303,6 +305,7 @@ export const GAMES: Game[] = [
     iframe: "https://files.rocketgames.io/uploads/games/h/head-soccer-2026/files/ef05ae/index.html",
     controls: "Arrow keys or WASD to Move and Jump, Space or X to shoot.",
     rating: 4.8,
+    isBlocked: true,
     featured: true,
     allow: "autoplay; fullscreen; focus-without-user-activation; gamepad; keyboard-map *; clipboard-write; web-share; accelerometer; magnetometer; gyroscope; microphone *",
     sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
@@ -330,6 +333,7 @@ export const GAMES: Game[] = [
     iframe: "https://run3.io/popgame/fnaf/fnaf1/",
     controls: "Mouse to look around and interact with doors/lights/camera.",
     rating: 4.8,
+    isBlocked: true,
     featured: true,
     allow: "fullscreen; pointer-lock",
     sandbox: "allow-forms allow-modals allow-same-origin allow-scripts allow-pointer-lock allow-orientation-lock allow-presentation allow-downloads"
@@ -423,6 +427,7 @@ export const GAMES: Game[] = [
     iframe: "https://g.igroutka.ru/games/1087/NgleEW1zP8YRpXGI/9d2ca9df-7f2c-4685-8907-e330be4ef190/index.html",
     controls: "WASD to move, Mouse to look, E to interact/pick up items, ESC to pause.",
     rating: 4.6,
+    isBlocked: true,
     allow: "autoplay; fullscreen; pointer-lock",
     sandbox: "allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock"
   },
@@ -477,6 +482,19 @@ export const GAMES: Game[] = [
     iframe: "https://ducky443747.github.io/rooftopsnipers2/",
     controls: "P1: W to jump, E to shoot. P2: I to jump, O to shoot.",
     rating: 4.8,
+    allow: "autoplay; fullscreen",
+    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+  },
+  {
+    id: "retro-bowl",
+    title: "Retro Bowl",
+    description: "The ultimate 8-bit team management and arcade football experience! Call the plays, manage your roster, draft stars, and lead your franchise to Retro Bowl glory.",
+    thumbnail: "/images/RETROBOWL.jpg",
+    color: "#7c2d12",
+    category: "Sports",
+    iframe: "https://falloutscript.github.io/Retrobowl/",
+    controls: "Mouse to aim and pass, click and drag to throw, click/tap to dodge, run, and dive.",
+    rating: 4.9,
     allow: "autoplay; fullscreen",
     sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
   }
