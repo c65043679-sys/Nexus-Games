@@ -510,5 +510,18 @@ export const GAMES: Game[] = [
     rating: 4.8,
     allow: "autoplay; fullscreen",
     sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+  },
+  {
+    id: "kingdoms-last-stand",
+    title: "Kingdom's Last Stand",
+    description: "A Tale of Siege and Shield! Erect stone walls, archer guard towers, high damage explosive cannons, and coordinate wood/stone quarries to repel the incoming monster horde.",
+    thumbnail: "/images/holytuff.png",
+    color: "#c8a84b",
+    category: "Strategy",
+    iframe: "/kingdoms-last-stand.html",
+    controls: "Click structure buttons on sidebar, select an empty grid space to build. Trigger Wave to test defences.",
+    rating: 4.9,
+    allow: "autoplay; fullscreen",
+    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
   }
 ];
