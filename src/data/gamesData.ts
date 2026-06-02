@@ -21,11 +21,11 @@ export const GAMES: Game[] = [
     thumbnail: "/images/minecraftclassic.jpg.jpg",
     color: "#22c55e",
     category: "Arcade",
-    iframe: "https://firebasestorage.googleapis.com/v0/b/classroomx/o/mcc.html?alt=media&token=928a934d-e7b5-4105-93f0-f8248ba099d4",
+    iframe: "blob:https://701673084-atari-embeds.googleusercontent.com/15899642-27ec-45c2-8b29-2b7eaafef787",
     controls: "WASD to Move, Left Click to Mine/Build, Right Click to toggle block type",
     rating: 4.9,
     featured: true,
-    allow: "fullscreen; gamepad; gyroscope; accelerometer; clipboard-read; clipboard-write",
+    allow: "fullscreen; autoplay; encrypted-media; gamepad; gyroscope; accelerometer; clipboard-read; clipboard-write",
     sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
   },
   {
