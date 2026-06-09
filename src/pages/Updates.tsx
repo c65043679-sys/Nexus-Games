@@ -13,6 +13,18 @@ interface UpdateItem {
 
 const UPDATES: UpdateItem[] = [
   {
+    version: "v2.7.0",
+    date: "June 9, 2026",
+    title: "BitLife Life Simulator Integration",
+    description: "Added the widely beloved virtual text-based life simulator 'BitLife' to the platform.",
+    type: "addition",
+    changes: [
+      "Acquired and deployed BitLife (https://theunblock3dlabs.github.io/sourced/play/bitlife/) under the Arcade category.",
+      "Mapped the custom uploaded thumbnail (/images/images.png) for high-performance visual catalog delivery.",
+      "Configured robust fullscreen capabilities and safe sandboxed iframe settings."
+    ]
+  },
+  {
     version: "v2.6.0",
     date: "May 28, 2026",
     title: "Soccer Random Integration",

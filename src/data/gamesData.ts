@@ -523,5 +523,18 @@ export const GAMES: Game[] = [
     rating: 4.9,
     allow: "autoplay; fullscreen",
     sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+  },
+  {
+    id: "bitlife",
+    title: "BitLife",
+    description: "How will you live your BitLife? Will you try to make all the right choices in an attempt to become a model citizen before you die? Or will you make choices that terrify your parents?",
+    thumbnail: "/images/images.png",
+    color: "#ef4444",
+    category: "Arcade",
+    iframe: "https://theunblock3dlabs.github.io/sourced/play/bitlife/",
+    controls: "Use mouse clicks to select various choices and make critical decisions that shape your life story.",
+    rating: 4.8,
+    allow: "autoplay; fullscreen",
+    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
   }
 ];
