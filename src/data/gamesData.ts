@@ -623,10 +623,9 @@ export const GAMES: Game[] = [
     color: "#fbbf24",
     category: "Arcade",
     iframe: "https://ub-g.github.io/embed/duck-life",
-    controls: "Up Arrow to jump or fly, Left and Right Arrows to dodge obstacles and train.",
+    controls: "Up Arrow to jump or fly, Left and Right Arrows to dodge obstacles and train. (Click inside game layout if keys don't respond)",
     rating: 4.8,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    aspectRatio: "four-three"
   },
   {
     id: "snake-io",
@@ -663,9 +662,7 @@ export const GAMES: Game[] = [
     category: "Arcade",
     iframe: "https://hub-pro.github.io/games/animalcrossingwildworld/index.html",
     controls: "Arrow Keys or WASD to move, click mouse to interact with emulator buttons, keyboards, or pocket screens.",
-    rating: 4.9,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    rating: 4.9
   },
   {
     id: "pokemon-emerald",
@@ -676,9 +673,7 @@ export const GAMES: Game[] = [
     category: "Arcade",
     iframe: "https://hub-pro.github.io/launcher.html#pokemonemerald",
     controls: "Arrow keys/D-pad to move, Z key for A button, X key for B button, Enter for Start, Shift for Select.",
-    rating: 4.9,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    rating: 4.9
   },
   {
     id: "the-binding-of-isaac",
@@ -689,9 +684,7 @@ export const GAMES: Game[] = [
     category: "Action",
     iframe: "https://hub-pro.github.io/games/thebindingofisaac/index.html",
     controls: "WASD to move, Arrow Keys to shoot tears, Space to activate special items, Shift or E for bombs.",
-    rating: 4.8,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    rating: 4.8
   },
   {
     id: "douchebag-life",
@@ -703,8 +696,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/douchebag/douchebaglife/index.html",
     controls: "Mouse click to select daily activities, workouts, style options, and talk to characters.",
     rating: 4.7,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    aspectRatio: "four-three"
   },
   {
     id: "douchebag-workout-2",
@@ -716,8 +708,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/douchebag/douchebagworkout2/index.html",
     controls: "Click on exercise equipment, hit keyboard keys repeatedly as prompted to train, navigate muscle screens.",
     rating: 4.8,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    aspectRatio: "four-three"
   },
   {
     id: "duck-life-2",
@@ -729,8 +720,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/ducklife/ducklife2/index.html",
     controls: "Arrow keys/WASD to fly, swim, jump, and dodge obstacles during training drills.",
     rating: 4.8,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    aspectRatio: "four-three"
   },
   {
     id: "ace-attorney",
@@ -741,9 +731,7 @@ export const GAMES: Game[] = [
     category: "Puzzle",
     iframe: "https://hub-pro.github.io/games/aceattorney/index.html",
     controls: "Mouse click to click choices/evidence, Arrow Keys / WASD, key Z for confirm, X for back, Enter for Start.",
-    rating: 4.9,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    rating: 4.9
   },
   {
     id: "super-mario-64",
@@ -753,10 +741,8 @@ export const GAMES: Game[] = [
     color: "#dc2626",
     category: "Arcade",
     iframe: "https://hub-pro.github.io/games/supermario64/index.html",
-    controls: "Arrow Keys/WASD for motion, key J to jump, K to attack/sprint, L for camera controls, X/C keys for extra functions.",
-    rating: 4.9,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    controls: "Press Enter (mapped to emulator Start/Submit key), Arrow Keys/WASD for motion, key J to jump, K to attack/sprint, L for camera controls, X/C keys for extra functions. Click inside the game window if keyboard does not respond.",
+    rating: 4.9
   },
   {
     id: "superhot",
@@ -766,10 +752,8 @@ export const GAMES: Game[] = [
     color: "#f97316",
     category: "Action",
     iframe: "https://hub-pro.github.io/games/superhot/index.html",
-    controls: "WASD to walk and look around carefully, Mouse to steer cursor, Left-Click to shoot or punch.",
-    rating: 4.9,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    controls: "WASD to walk and look around carefully, Mouse to steer cursor, Left-Click to shoot or punch. Click the game screen to lock cursor.",
+    rating: 4.9
   },
   {
     id: "portal-flash",
@@ -781,8 +765,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/portalflash/index.html",
     controls: "A/D or Arrow Keys to move, W to jump, Mouse cursor to point and fire portals, Q for blue, E for orange portal.",
     rating: 4.8,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    aspectRatio: "four-three"
   },
   {
     id: "fnaf-4",
@@ -793,9 +776,7 @@ export const GAMES: Game[] = [
     category: "Horror",
     iframe: "https://hub-pro.github.io/games/fnaf/fnaf4/index.html",
     controls: "Mouse movement to look around, Space to trigger flashlights, Hold Left-Click/key S to shut bedroom doors close.",
-    rating: 4.9,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    rating: 4.9
   },
   {
     id: "pokemon-red",
@@ -806,9 +787,7 @@ export const GAMES: Game[] = [
     category: "Arcade",
     iframe: "https://hub-pro.github.io/launcher.html#pokemonred",
     controls: "Arrow keys/D-pad to move, Z key for A button, X key for B button, Enter for Start, Shift for Select.",
-    rating: 4.9,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    rating: 4.9
   },
   {
     id: "bloons-td-5",
@@ -820,7 +799,6 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/bloonstd5/index.html",
     controls: "Mouse drag to deploy towers, click upgrades, and press Space or Play Button to launch waves.",
     rating: 4.9,
-    allow: "autoplay; fullscreen",
-    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+    aspectRatio: "four-three"
   }
 ];

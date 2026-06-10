@@ -13,7 +13,7 @@ export interface Game {
   allow?: string;
   sandbox?: string;
   scale?: number;
-  aspectRatio?: 'video' | 'portrait' | 'square';
+  aspectRatio?: 'video' | 'portrait' | 'square' | 'four-three';
   isBlocked?: boolean;
 }
 

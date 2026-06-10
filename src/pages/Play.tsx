@@ -16,6 +16,16 @@ export const Play: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  useEffect(() => {
+    // Focus game iframe when loading or switching games
+    const timer = setTimeout(() => {
+      if (iframeRef.current) {
+        iframeRef.current.focus();
+      }
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [id]);
+
   // Get related games (same category) and prioritize top/featured ones
   const relatedGames = game 
     ? GAMES.filter(g => g.category === game.category && g.id !== game.id)
@@ -142,9 +152,11 @@ export const Play: React.FC = () => {
       <div className="flex-1 min-w-0 space-y-8">
         <div 
           ref={containerRef}
-          className={`relative bg-black rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-white/10 group/player ${
+          onClick={() => iframeRef.current?.focus()}
+          className={`relative bg-black rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-white/10 group/player cursor-pointer ${
             game.aspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto' : 
             game.aspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto' : 
+            game.aspectRatio === 'four-three' ? 'aspect-[4/3] max-w-5xl mx-auto' :
             'aspect-video'
           }`}
         >
