@@ -13,6 +13,18 @@ interface UpdateItem {
 
 const UPDATES: UpdateItem[] = [
   {
+    version: "v2.9.0",
+    date: "June 10, 2026",
+    title: "Massive Arcade & Puzzle Expansion",
+    description: "Added 8 highly requested blockbusters to our premium gaming collection, spanning Arcade, Puzzle, Action, and more.",
+    type: "addition",
+    changes: [
+      "Integrated Life - The Game, There Is No Game, Henry Stickmin: Breaking the Bank, Vex 7, Jetpack Joyride, Duck Life, Snake.io, and Crossy Road.",
+      "Mapped the custom uploaded thumbnails for Life - The Game (/images/life-the-game-logo.png), There Is No Game (/images/there-is-no-game-logo.jpg), Henry Stickmin (/images/Henry_looking_at_a_bank.webp), Vex 7 (/images/vex7.jpg), Jetpack Joyride (/images/jetpack-joyride-review-header.webp), Duck Life (/images/duck life (2).jpg), Snake.io (/images/snake.io.png), and Crossy Road (/images/CrossyRoad_Banner.webp) to provide high-fidelity tailored graphics.",
+      "Optimized sandbox parameters and iframe controls for seamless embedded browser execution without interference."
+    ]
+  },
+  {
     version: "v2.8.0",
     date: "June 10, 2026",
     title: "Scooby-Doo Scary Run Integration",
