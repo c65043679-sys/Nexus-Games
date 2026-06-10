@@ -625,7 +625,9 @@ export const GAMES: Game[] = [
     iframe: "https://ub-g.github.io/embed/duck-life",
     controls: "Up Arrow to jump or fly, Left and Right Arrows to dodge obstacles and train. (Click inside game layout if keys don't respond)",
     rating: 4.8,
-    aspectRatio: "four-three"
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
   },
   {
     id: "snake-io",
@@ -696,7 +698,9 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/douchebag/douchebaglife/index.html",
     controls: "Mouse click to select daily activities, workouts, style options, and talk to characters.",
     rating: 4.7,
-    aspectRatio: "four-three"
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
   },
   {
     id: "douchebag-workout-2",
@@ -708,7 +712,9 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/douchebag/douchebagworkout2/index.html",
     controls: "Click on exercise equipment, hit keyboard keys repeatedly as prompted to train, navigate muscle screens.",
     rating: 4.8,
-    aspectRatio: "four-three"
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
   },
   {
     id: "duck-life-2",
@@ -720,7 +726,9 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/ducklife/ducklife2/index.html",
     controls: "Arrow keys/WASD to fly, swim, jump, and dodge obstacles during training drills.",
     rating: 4.8,
-    aspectRatio: "four-three"
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
   },
   {
     id: "ace-attorney",
@@ -765,7 +773,9 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/portalflash/index.html",
     controls: "A/D or Arrow Keys to move, W to jump, Mouse cursor to point and fire portals, Q for blue, E for orange portal.",
     rating: 4.8,
-    aspectRatio: "four-three"
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
   },
   {
     id: "fnaf-4",
@@ -799,6 +809,8 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/bloonstd5/index.html",
     controls: "Mouse drag to deploy towers, click upgrades, and press Space or Play Button to launch waves.",
     rating: 4.9,
-    aspectRatio: "four-three"
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
   }
 ];

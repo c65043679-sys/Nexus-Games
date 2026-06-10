@@ -13,7 +13,9 @@ export interface Game {
   allow?: string;
   sandbox?: string;
   scale?: number;
-  aspectRatio?: 'video' | 'portrait' | 'square' | 'four-three';
+  aspectRatio?: 'video' | 'portrait' | 'square' | 'four-three' | 'five-four';
+  nativeWidth?: number;
+  nativeHeight?: number;
   isBlocked?: boolean;
 }
 

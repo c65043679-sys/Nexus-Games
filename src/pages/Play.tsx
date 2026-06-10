@@ -15,6 +15,24 @@ export const Play: React.FC = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.target.clientWidth);
+      }
+    });
+    
+    resizeObserver.observe(containerRef.current);
+    setContainerWidth(containerRef.current.clientWidth);
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [id]);
 
   useEffect(() => {
     // Focus game iframe when loading or switching games
@@ -157,28 +175,49 @@ export const Play: React.FC = () => {
             game.aspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto' : 
             game.aspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto' : 
             game.aspectRatio === 'four-three' ? 'aspect-[4/3] max-w-5xl mx-auto' :
+            game.aspectRatio === 'five-four' ? 'aspect-[5/4] max-w-5xl mx-auto' :
             'aspect-video'
           }`}
         >
-          <iframe
-            ref={iframeRef}
-            src={game.iframe}
-            className="w-full h-full border-none"
-            style={{ 
-              transform: game.scale ? `scale(${game.scale})` : 'none',
-              transformOrigin: 'center center',
-              width: game.scale ? `${100 / game.scale}%` : '100%',
-              height: game.scale ? `${100 / game.scale}%` : '100%',
-              position: game.scale ? 'absolute' : 'relative',
-              left: game.scale ? '50%' : 'auto',
-              top: game.scale ? '50%' : 'auto',
-              translate: game.scale ? '-50% -50%' : 'none'
-            }}
-            title={game.title}
-            allowFullScreen
-            allow={game.allow || "autoplay; fullscreen; accelerometer; gyroscope; gamepad; pointer-lock"}
-            sandbox={game.sandbox || "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"}
-          />
+          {(() => {
+            const hasNativeDimensions = !!(game.nativeWidth && game.nativeHeight);
+            const iframeScale = hasNativeDimensions && containerWidth > 0 
+              ? containerWidth / game.nativeWidth 
+              : 1;
+
+            return (
+              <iframe
+                ref={iframeRef}
+                src={game.iframe}
+                scrolling="no"
+                className="w-full h-full border-none"
+                style={hasNativeDimensions ? {
+                  width: `${game.nativeWidth}px`,
+                  height: `${game.nativeHeight}px`,
+                  transform: `scale(${iframeScale})`,
+                  transformOrigin: 'top left',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  border: 'none',
+                  overflow: 'hidden'
+                } : { 
+                  transform: game.scale ? `scale(${game.scale})` : 'none',
+                  transformOrigin: 'center center',
+                  width: game.scale ? `${100 / game.scale}%` : '100%',
+                  height: game.scale ? `${100 / game.scale}%` : '100%',
+                  position: game.scale ? 'absolute' : 'relative',
+                  left: game.scale ? '50%' : 'auto',
+                  top: game.scale ? '50%' : 'auto',
+                  translate: game.scale ? '-50% -50%' : 'none'
+                }}
+                title={game.title}
+                allowFullScreen
+                allow={game.allow || "autoplay; fullscreen; accelerometer; gyroscope; gamepad; pointer-lock"}
+                sandbox={game.sandbox || "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"}
+              />
+            );
+          })()}
           
           {/* Fullscreen Overlay Button */}
           <button 
