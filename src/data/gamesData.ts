@@ -536,5 +536,18 @@ export const GAMES: Game[] = [
     rating: 4.8,
     allow: "autoplay; fullscreen",
     sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
+  },
+  {
+    id: "scooby-doo-creepy-run",
+    title: "Scooby-Doo Creepy Run",
+    description: "Help Scooby and Shaggy survive their spookiest adventure yet! Dash through graveyard haunts, dodge creeping ghosts, and leap over scary obstacles. Make sure to play with your volume turned all the way up for the most chilling sound effects and ultimate eerie atmosphere!",
+    thumbnail: "/images/scoobydooscaryrun.jpg",
+    color: "#f97316",
+    category: "Horror",
+    iframe: "https://scoobydoocreepyrun.com/embed/scooby-doo-creepy-run",
+    controls: "Up Arrow/Space to Jump, Down Arrow to Slide under obstacles.",
+    rating: 4.9,
+    allow: "autoplay; fullscreen; encrypted-media",
+    sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
   }
 ];

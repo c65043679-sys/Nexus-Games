@@ -13,6 +13,18 @@ interface UpdateItem {
 
 const UPDATES: UpdateItem[] = [
   {
+    version: "v2.8.0",
+    date: "June 10, 2026",
+    title: "Scooby-Doo Scary Run Integration",
+    description: "Successfully added the nostalgic, eerie cartoon endless runner 'Scooby-Doo Scary Run' to the Horror catalog.",
+    type: "addition",
+    changes: [
+      "Integrated Scooby-Doo Scary Run (https://scoobydoocreepyrun.com/embed/scooby-doo-creepy-run) under the Horror category.",
+      "Mapped the custom uploaded cartoon illustration thumbnail (/images/scoobydooscaryrun.jpg).",
+      "Explicitly alerted users inside the system description to turn the volume all the way up for the most spooky and authentic audio experience."
+    ]
+  },
+  {
     version: "v2.7.0",
     date: "June 9, 2026",
     title: "BitLife Life Simulator Integration",
