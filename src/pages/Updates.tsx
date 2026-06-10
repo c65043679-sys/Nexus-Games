@@ -13,6 +13,18 @@ interface UpdateItem {
 
 const UPDATES: UpdateItem[] = [
   {
+    version: "v3.0.0",
+    date: "June 10, 2026",
+    title: "Classic Retro & Nostalgia Mega-Drop",
+    description: "Successfully added 13 legendary console retro adaptations, life simulators, and flash puzzle titles.",
+    type: "addition",
+    changes: [
+      "Integrated Animal Crossing: Wild World, Pokémon Emerald, The Binding of Isaac, Douchebag Life, Douchebag Workout 2, Duck Life 2, Phoenix Wright: Ace Attorney, Super Mario 64, Superhot, Portal: The Flash Version, Five Nights at Freddy's 4, Pokémon Red, and Bloons TD 5.",
+      "Mapped beautiful, curated game card artwork thumbnails and colorful accent styling for each masterpiece console and web title.",
+      "Configured detailed custom controller instructions and secure, sandboxed emulator settings for zero-interference input handling."
+    ]
+  },
+  {
     version: "v2.9.0",
     date: "June 10, 2026",
     title: "Massive Arcade & Puzzle Expansion",
