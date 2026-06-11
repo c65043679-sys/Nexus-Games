@@ -224,7 +224,6 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/slope/index.html",
     controls: "Arrow keys or AD to steer.",
     rating: 4.7,
-    isBlocked: true,
     allow: "autoplay; fullscreen; accelerometer; gyroscope; gamepad; pointer-lock",
     sandbox: "allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox"
   },
@@ -686,7 +685,10 @@ export const GAMES: Game[] = [
     category: "Action",
     iframe: "https://hub-pro.github.io/games/thebindingofisaac/index.html",
     controls: "WASD to move, Arrow Keys to shoot tears, Space to activate special items, Shift or E for bombs.",
-    rating: 4.8
+    rating: 4.8,
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
   },
   {
     id: "douchebag-life",
