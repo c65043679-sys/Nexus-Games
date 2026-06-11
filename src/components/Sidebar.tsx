@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, Skull, Trophy, Star, Settings, Lock, Unlock, History } from 'lucide-react';
+import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, Skull, Trophy, Star, Settings, Lock, Unlock, History, PlusCircle } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Category } from '../types';
 import { useAuth } from './AuthContext';
@@ -81,6 +81,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
             <History className="w-5 h-5" />
             <span className="text-sm font-medium">System Updates</span>
           </Link>
+
+          <a
+            href="https://forms.gle/vbbxSHpEHsYwJyH96"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-transparent text-slate-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer"
+          >
+            <PlusCircle className="w-5 h-5 text-violet-400" />
+            <span className="text-sm font-medium">Request a Game</span>
+          </a>
 
           {user && (
             <Link 

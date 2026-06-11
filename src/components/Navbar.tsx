@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Heart, User as UserIcon } from 'lucide-react';
+import { Search, Heart, User as UserIcon, PlusCircle } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
@@ -41,6 +41,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
       </div>
 
       <nav className="flex items-center gap-6">
+        <a
+          href="https://forms.gle/vbbxSHpEHsYwJyH96"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 hover:text-white text-slate-300 text-xs font-bold rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
+        >
+          <PlusCircle className="w-4 h-4 text-violet-400" />
+          Request Games
+        </a>
+
         {user ? (
           <div className="flex items-center gap-3">
             <div className="hidden sm:block text-right">
