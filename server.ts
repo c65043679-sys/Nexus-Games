@@ -77,7 +77,7 @@ async function startServer() {
       const currentDomain = `${proto}://${host}`;
 
       // Dynamically replace default placeholder domain with the request domain
-      const customizedSitemap = data.replaceAll("https://nexusgames-deploy.com", currentDomain);
+      const customizedSitemap = data.replaceAll("https://unblocked.nexusgames.dpdns.org", currentDomain);
 
       res.header("Content-Type", "application/xml");
       res.status(200).send(customizedSitemap);
@@ -102,7 +102,7 @@ async function startServer() {
       const currentDomain = `${proto}://${host}`;
 
       // Dynamically replace default placeholder domain with the request domain
-      const customizedRobots = data.replaceAll("https://nexusgames-deploy.com", currentDomain);
+      const customizedRobots = data.replaceAll("https://unblocked.nexusgames.dpdns.org", currentDomain);
 
       res.header("Content-Type", "text/plain");
       res.status(200).send(customizedRobots);

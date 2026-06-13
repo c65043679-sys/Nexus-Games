@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://nexusgames-deploy.com/sitemap.xml
+Sitemap: https://unblocked.nexusgames.dpdns.org/sitemap.xml
