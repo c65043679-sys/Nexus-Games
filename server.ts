@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 
 async function startServer() {
@@ -56,6 +57,56 @@ async function startServer() {
   // Healthcheck endpoint
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
+  });
+
+  // Sitemap.xml with dynamic hostname substitution to support dev, share, and custom domains seamlessly
+  app.get("/sitemap.xml", (req, res) => {
+    const sitemapPath = process.env.NODE_ENV === "production"
+      ? path.join(process.cwd(), "dist", "sitemap.xml")
+      : path.join(process.cwd(), "public", "sitemap.xml");
+
+    fs.readFile(sitemapPath, "utf8", (err, data) => {
+      if (err) {
+        console.error("Error reading sitemap file:", err);
+        return res.status(500).send("Sitemap not found");
+      }
+
+      // Determine actual protocol and host dynamically
+      const proto = String(req.headers["x-forwarded-proto"] || req.protocol);
+      const host = String(req.headers["x-forwarded-host"] || req.get("host"));
+      const currentDomain = `${proto}://${host}`;
+
+      // Dynamically replace default placeholder domain with the request domain
+      const customizedSitemap = data.replaceAll("https://nexusgames-deploy.com", currentDomain);
+
+      res.header("Content-Type", "application/xml");
+      res.status(200).send(customizedSitemap);
+    });
+  });
+
+  // Robots.txt with dynamic hostname substitution for the Sitemap path
+  app.get("/robots.txt", (req, res) => {
+    const robotsPath = process.env.NODE_ENV === "production"
+      ? path.join(process.cwd(), "dist", "robots.txt")
+      : path.join(process.cwd(), "public", "robots.txt");
+
+    fs.readFile(robotsPath, "utf8", (err, data) => {
+      if (err) {
+        console.error("Error reading robots.txt file:", err);
+        return res.status(500).send("Robots.txt not found");
+      }
+
+      // Determine actual protocol and host dynamically
+      const proto = String(req.headers["x-forwarded-proto"] || req.protocol);
+      const host = String(req.headers["x-forwarded-host"] || req.get("host"));
+      const currentDomain = `${proto}://${host}`;
+
+      // Dynamically replace default placeholder domain with the request domain
+      const customizedRobots = data.replaceAll("https://nexusgames-deploy.com", currentDomain);
+
+      res.header("Content-Type", "text/plain");
+      res.status(200).send(customizedRobots);
+    });
   });
 
   // Integrate Vite Dev Server in Development mode
