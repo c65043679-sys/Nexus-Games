@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Info, Gamepad2, Maximize2, Save, CheckCircle2, Heart, Zap } from 'lucide-react';
+import { ChevronLeft, Info, Gamepad2, Maximize2, Minimize2, Save, CheckCircle2, Heart, Zap } from 'lucide-react';
 import { GAMES } from '../data/gamesData';
 import { useAuth } from '../components/AuthContext';
 import { db } from '../lib/firebase';
@@ -16,6 +16,18 @@ export const Play: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [containerHeight, setContainerHeight] = useState<number>(0);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -23,11 +35,13 @@ export const Play: React.FC = () => {
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setContainerWidth(entry.target.clientWidth);
+        setContainerHeight(entry.target.clientHeight);
       }
     });
     
     resizeObserver.observe(containerRef.current);
     setContainerWidth(containerRef.current.clientWidth);
+    setContainerHeight(containerRef.current.clientHeight);
     
     return () => {
       resizeObserver.disconnect();
@@ -171,19 +185,34 @@ export const Play: React.FC = () => {
         <div 
           ref={containerRef}
           onClick={() => iframeRef.current?.focus()}
-          className={`relative bg-black rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-white/10 group/player cursor-pointer ${
-            game.aspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto' : 
-            game.aspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto' : 
-            game.aspectRatio === 'four-three' ? 'aspect-[4/3] max-w-5xl mx-auto' :
-            game.aspectRatio === 'five-four' ? 'aspect-[5/4] max-w-5xl mx-auto' :
-            'aspect-video'
+          className={`relative bg-black overflow-hidden group/player cursor-pointer transition-all ${
+            isFullscreen 
+              ? 'w-screen h-screen rounded-none border-none' 
+              : `rounded-3xl shadow-2xl shadow-violet-500/10 border border-white/10 ${
+                  game.aspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto' : 
+                  game.aspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto' : 
+                  game.aspectRatio === 'four-three' ? 'aspect-[4/3] max-w-5xl mx-auto' :
+                  game.aspectRatio === 'five-four' ? 'aspect-[5/4] max-w-5xl mx-auto' :
+                  'aspect-video'
+                }`
           }`}
         >
           {(() => {
             const hasNativeDimensions = !!(game.nativeWidth && game.nativeHeight);
-            const iframeScale = hasNativeDimensions && containerWidth > 0 
-              ? containerWidth / game.nativeWidth 
+            const iframeScale = hasNativeDimensions && containerWidth > 0 && containerHeight > 0
+              ? Math.min(containerWidth / game.nativeWidth, containerHeight / game.nativeHeight)
               : 1;
+
+            const scaledWidth = hasNativeDimensions ? game.nativeWidth * iframeScale : 0;
+            const scaledHeight = hasNativeDimensions ? game.nativeHeight * iframeScale : 0;
+            
+            const leftOffset = hasNativeDimensions && containerWidth > 0
+              ? (containerWidth - scaledWidth) / 2
+              : 0;
+              
+            const topOffset = hasNativeDimensions && containerHeight > 0
+              ? (containerHeight - scaledHeight) / 2
+              : 0;
 
             return (
               <iframe
@@ -197,8 +226,8 @@ export const Play: React.FC = () => {
                   transform: `scale(${iframeScale})`,
                   transformOrigin: 'top left',
                   position: 'absolute',
-                  top: 0,
-                  left: 0,
+                  top: `${topOffset}px`,
+                  left: `${leftOffset}px`,
                   border: 'none',
                   overflow: 'hidden'
                 } : { 
@@ -223,9 +252,9 @@ export const Play: React.FC = () => {
           <button 
             onClick={toggleFullscreen}
             className="absolute bottom-6 right-6 p-3 rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:bg-black/80 opacity-0 group-hover/player:opacity-100 transition-all duration-300 transform translate-y-2 group-hover/player:translate-y-0 shadow-lg"
-            title="Toggle Fullscreen"
+            title={isFullscreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
           >
-            <Maximize2 className="w-6 h-6" />
+            {isFullscreen ? <Minimize2 className="w-6 h-6" /> : <Maximize2 className="w-6 h-6" />}
           </button>
         </div>
 
