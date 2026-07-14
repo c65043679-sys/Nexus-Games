@@ -870,5 +870,19 @@ export const GAMES: Game[] = [
     aspectRatio: "five-four",
     nativeWidth: 1000,
     nativeHeight: 800
+  },
+  {
+    id: "volley-random",
+    title: "Volleyball Random",
+    description: "Enjoy volleyball with fun physics and ragdoll players! Simple one-button controls let you jump, kick, and spike your way to victory.",
+    thumbnail: "/images/volleyballrandom.png",
+    color: "#f43f5e",
+    category: "Sports",
+    iframe: "https://htmlxm.github.io/h9/volley-random/",
+    controls: "W or Up Arrow to jump, kick, and hit the ball.",
+    rating: 4.8,
+    featured: true,
+    trending: true,
+    allow: "microphone"
   }
 ];
