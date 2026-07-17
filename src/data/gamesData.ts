@@ -733,6 +733,34 @@ export const GAMES: Game[] = [
     nativeHeight: 800
   },
   {
+    id: "duck-life-3",
+    title: "Duck Life 3",
+    description: "Train your duck across specialized evolutionary forms! Choose from 4 unique duck types, master advanced athletic challenges, and dominate league tournaments.",
+    thumbnail: "/images/ducklife 3.jpg",
+    color: "#f59e0b",
+    category: "Arcade",
+    iframe: "https://hub-pro.github.io/games/ducklife/ducklife3/index.html",
+    controls: "Arrow keys or WASD to play training games and guide your duck. Left click to select options.",
+    rating: 4.8,
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
+  },
+  {
+    id: "duck-life-4",
+    title: "Duck Life 4",
+    description: "Build and manage a team of talented racing ducks! Explore a vibrant open-world, train multiple specialized ducks, and claim victory in six global tournaments.",
+    thumbnail: "/images/duck life 4.jpg",
+    color: "#eab308",
+    category: "Arcade",
+    iframe: "https://hub-pro.github.io/games/ducklife/ducklife4/index.html",
+    controls: "Arrow keys/WASD to move and train your ducks. Use mouse clicks to manage your squad.",
+    rating: 4.9,
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
+  },
+  {
     id: "ace-attorney",
     title: "Phoenix Wright: Ace Attorney",
     description: "Become a fiery legal defense attorney! Investigate mysterious crime scenes, gather crucial evidence, cross-examine eccentric witnesses, and yell 'Objection!' to save innocent clients.",
