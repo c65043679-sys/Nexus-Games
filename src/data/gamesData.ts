@@ -661,8 +661,7 @@ export const GAMES: Game[] = [
     category: "Arcade",
     iframe: "https://hub-pro.github.io/games/animalcrossingwildworld/index.html",
     controls: "Arrow Keys or WASD to move, click mouse to interact with emulator buttons, keyboards, or pocket screens.",
-    rating: 4.9,
-    aspectRatio: "four-three"
+    rating: 4.9
   },
   {
     id: "pokemon-emerald",
@@ -673,8 +672,7 @@ export const GAMES: Game[] = [
     category: "Arcade",
     iframe: "https://hub-pro.github.io/launcher.html#pokemonemerald",
     controls: "Arrow keys/D-pad to move, Z key for A button, X key for B button, Enter for Start, Shift for Select.",
-    rating: 4.9,
-    aspectRatio: "four-three"
+    rating: 4.9
   },
   {
     id: "the-binding-of-isaac",
@@ -757,8 +755,7 @@ export const GAMES: Game[] = [
     category: "Puzzle",
     iframe: "https://hub-pro.github.io/games/aceattorney/index.html",
     controls: "Mouse click to click choices/evidence, Arrow Keys / WASD, key Z for confirm, X for back, Enter for Start.",
-    rating: 4.9,
-    aspectRatio: "four-three"
+    rating: 4.9
   },
   {
     id: "super-mario-64",
@@ -769,8 +766,7 @@ export const GAMES: Game[] = [
     category: "Arcade",
     iframe: "https://hub-pro.github.io/games/supermario64/index.html",
     controls: "Press Enter (mapped to emulator Start/Submit key), Arrow Keys/WASD for motion, key J to jump, K to attack/sprint, L for camera controls, X/C keys for extra functions. Click inside the game window if keyboard does not respond.",
-    rating: 4.9,
-    aspectRatio: "four-three"
+    rating: 4.9
   },
   {
     id: "superhot",
@@ -781,8 +777,7 @@ export const GAMES: Game[] = [
     category: "Action",
     iframe: "https://hub-pro.github.io/games/superhot/index.html",
     controls: "WASD to walk and look around carefully, Mouse to steer cursor, Left-Click to shoot or punch. Click the game screen to lock cursor.",
-    rating: 4.9,
-    aspectRatio: "four-three"
+    rating: 4.9
   },
   {
     id: "portal-flash",
@@ -805,8 +800,7 @@ export const GAMES: Game[] = [
     category: "Horror",
     iframe: "https://hub-pro.github.io/games/fnaf/fnaf4/index.html",
     controls: "Mouse movement to look around, Space to trigger flashlights, Hold Left-Click/key S to shut bedroom doors close.",
-    rating: 4.9,
-    aspectRatio: "four-three"
+    rating: 4.9
   },
   {
     id: "pokemon-red",
@@ -817,8 +811,7 @@ export const GAMES: Game[] = [
     category: "Arcade",
     iframe: "https://hub-pro.github.io/launcher.html#pokemonred",
     controls: "Arrow keys/D-pad to move, Z key for A button, X key for B button, Enter for Start, Shift for Select.",
-    rating: 4.9,
-    aspectRatio: "four-three"
+    rating: 4.9
   },
   {
     id: "bloons-td-5",

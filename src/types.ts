@@ -13,7 +13,6 @@ export interface Game {
   allow?: string;
   sandbox?: string;
   scale?: number;
-  transformOrigin?: string;
   aspectRatio?: 'video' | 'portrait' | 'square' | 'four-three' | 'five-four';
   nativeWidth?: number;
   nativeHeight?: number;
