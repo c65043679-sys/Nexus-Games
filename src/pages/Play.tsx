@@ -185,26 +185,36 @@ export const Play: React.FC = () => {
         <div 
           ref={containerRef}
           onClick={() => iframeRef.current?.focus()}
-          className={`relative bg-black overflow-hidden group/player cursor-pointer transition-all ${
+          className={`relative bg-black overflow-hidden group/player cursor-pointer transition-all w-full ${
             isFullscreen 
               ? 'w-screen h-screen rounded-none border-none' 
               : `rounded-3xl shadow-2xl shadow-violet-500/10 border border-white/10 ${
-                  game.aspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto max-h-[72vh]' : 
-                  game.aspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto max-h-[72vh]' : 
-                  game.aspectRatio === 'four-three' ? 'aspect-[4/3] max-w-4xl mx-auto max-h-[72vh]' :
-                  game.aspectRatio === 'five-four' ? 'aspect-[5/4] max-w-4xl mx-auto max-h-[72vh]' :
-                  'aspect-video max-w-5xl mx-auto max-h-[72vh]'
+                  game.aspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto max-h-[70vh]' : 
+                  game.aspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto max-h-[70vh]' : 
+                  game.aspectRatio === 'four-three' ? 'aspect-[4/3] max-w-4xl mx-auto max-h-[70vh]' :
+                  game.aspectRatio === 'five-four' ? 'aspect-[5/4] max-w-4xl mx-auto max-h-[70vh]' :
+                  'aspect-video max-w-5xl mx-auto max-h-[70vh]'
                 }`
           }`}
         >
           {(() => {
-            const hasNativeDimensions = !!(game.nativeWidth && game.nativeHeight);
+            const isHubProFlash = game.iframe.includes('hub-pro.github.io/games/') && 
+              !game.iframe.includes('/slope/') && 
+              !game.iframe.includes('/supermario64/') && 
+              !game.iframe.includes('/superhot/') && 
+              !game.iframe.includes('/animalcrossing') && 
+              !game.iframe.includes('/aceattorney/');
+
+            const nativeW = game.nativeWidth || (isHubProFlash ? 1000 : undefined);
+            const nativeH = game.nativeHeight || (isHubProFlash ? 800 : undefined);
+            const hasNativeDimensions = !!(nativeW && nativeH);
+
             const iframeScale = hasNativeDimensions && containerWidth > 0 && containerHeight > 0
-              ? Math.min(containerWidth / game.nativeWidth, containerHeight / game.nativeHeight)
+              ? Math.min(containerWidth / nativeW, containerHeight / nativeH)
               : 1;
 
-            const scaledWidth = hasNativeDimensions ? game.nativeWidth * iframeScale : 0;
-            const scaledHeight = hasNativeDimensions ? game.nativeHeight * iframeScale : 0;
+            const scaledWidth = hasNativeDimensions ? nativeW * iframeScale : 0;
+            const scaledHeight = hasNativeDimensions ? nativeH * iframeScale : 0;
             
             const leftOffset = hasNativeDimensions && containerWidth > 0
               ? (containerWidth - scaledWidth) / 2
@@ -221,8 +231,8 @@ export const Play: React.FC = () => {
                 scrolling="no"
                 className="w-full h-full border-none"
                 style={hasNativeDimensions ? {
-                  width: `${game.nativeWidth}px`,
-                  height: `${game.nativeHeight}px`,
+                  width: `${nativeW}px`,
+                  height: `${nativeH}px`,
                   transform: `scale(${iframeScale})`,
                   transformOrigin: 'top left',
                   position: 'absolute',
