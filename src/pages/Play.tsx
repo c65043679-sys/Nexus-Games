@@ -133,6 +133,25 @@ export const Play: React.FC = () => {
     );
   }
 
+  const isRuffleFlashGame = game ? (
+    game.aspectRatio === 'five-four' ||
+    (game.nativeWidth === 1000 && game.nativeHeight === 800) ||
+    ((
+      game.iframe.includes('hub-pro.github.io/games/') || 
+      game.iframe.includes('class811.github.io') ||
+      game.iframe.includes('theimpossiblequiz-online') ||
+      game.iframe.includes('bloxorzunblocked') ||
+      game.iframe.includes('happy-wheels-online')
+    ) && 
+    !game.iframe.includes('/slope/') && 
+    !game.iframe.includes('/supermario64/') && 
+    !game.iframe.includes('/superhot/') && 
+    !game.iframe.includes('/animalcrossing') && 
+    !game.iframe.includes('/aceattorney/'))
+  ) : false;
+
+  const effectiveAspectRatio = game?.aspectRatio || (isRuffleFlashGame ? 'five-four' : undefined);
+
   return (
     <div className="flex-1 max-w-[1440px] mx-auto p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
@@ -189,24 +208,33 @@ export const Play: React.FC = () => {
             isFullscreen 
               ? 'w-screen h-screen rounded-none border-none' 
               : `rounded-3xl shadow-2xl shadow-violet-500/10 border border-white/10 ${
-                  game.aspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto max-h-[70vh]' : 
-                  game.aspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto max-h-[70vh]' : 
-                  game.aspectRatio === 'four-three' ? 'aspect-[4/3] max-w-4xl mx-auto max-h-[70vh]' :
-                  game.aspectRatio === 'five-four' ? 'aspect-[5/4] max-w-4xl mx-auto max-h-[70vh]' :
+                  effectiveAspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto max-h-[70vh]' : 
+                  effectiveAspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto max-h-[70vh]' : 
+                  effectiveAspectRatio === 'four-three' ? 'aspect-[4/3] max-w-4xl mx-auto max-h-[70vh]' :
+                  effectiveAspectRatio === 'five-four' ? 'aspect-[5/4] max-w-4xl mx-auto max-h-[70vh]' :
                   'aspect-video max-w-5xl mx-auto max-h-[70vh]'
                 }`
           }`}
         >
           {(() => {
-            const isHubProFlash = game.iframe.includes('hub-pro.github.io/games/') && 
+            const isRuffleFlashGame = 
+              game.aspectRatio === 'five-four' ||
+              (game.nativeWidth === 1000 && game.nativeHeight === 800) ||
+              ((
+                game.iframe.includes('hub-pro.github.io/games/') || 
+                game.iframe.includes('class811.github.io') ||
+                game.iframe.includes('theimpossiblequiz-online') ||
+                game.iframe.includes('bloxorzunblocked') ||
+                game.iframe.includes('happy-wheels-online')
+              ) && 
               !game.iframe.includes('/slope/') && 
               !game.iframe.includes('/supermario64/') && 
               !game.iframe.includes('/superhot/') && 
               !game.iframe.includes('/animalcrossing') && 
-              !game.iframe.includes('/aceattorney/');
+              !game.iframe.includes('/aceattorney/'));
 
-            const nativeW = game.nativeWidth || (isHubProFlash ? 1000 : undefined);
-            const nativeH = game.nativeHeight || (isHubProFlash ? 800 : undefined);
+            const nativeW = game.nativeWidth || (isRuffleFlashGame ? 1000 : undefined);
+            const nativeH = game.nativeHeight || (isRuffleFlashGame ? 800 : undefined);
             const hasNativeDimensions = !!(nativeW && nativeH);
 
             const iframeScale = hasNativeDimensions && containerWidth > 0 && containerHeight > 0

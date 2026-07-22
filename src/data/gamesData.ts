@@ -115,7 +115,10 @@ export const GAMES: Game[] = [
     category: "Puzzle",
     iframe: "https://theimpossiblequiz-online.github.io/file/",
     controls: "Mouse click to select answers.",
-    rating: 4.6
+    rating: 4.6,
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
   },
   {
     id: "subway-surfers",
@@ -413,6 +416,9 @@ export const GAMES: Game[] = [
     iframe: "https://happy-wheels-online.github.io/file/",
     controls: "Arrow keys to move, Space to primary action, Shift/Ctrl for secondary actions, Z to eject.",
     rating: 4.7,
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800,
     allow: "autoplay; fullscreen",
     sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
   },
@@ -454,6 +460,9 @@ export const GAMES: Game[] = [
     iframe: "https://bloxorzunblocked.github.io/",
     controls: "Arrow keys to roll the block.",
     rating: 4.8,
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800,
     allow: "autoplay; fullscreen",
     sandbox: "allow-scripts allow-popups allow-forms allow-same-origin allow-popups-to-escape-sandbox allow-downloads allow-storage-access-by-user-activation"
   },
@@ -572,6 +581,9 @@ export const GAMES: Game[] = [
     iframe: "https://class811.github.io/g/there-is-no-game",
     controls: "Left-click to interact with menu items, drag elements, and uncover secret puzzles.",
     rating: 4.9,
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800,
     allow: "autoplay; fullscreen",
     sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
   },
@@ -585,6 +597,9 @@ export const GAMES: Game[] = [
     iframe: "https://class811.github.io/g7/breaking-the-bank",
     controls: "Click options on the screen to choose your heist tools and watch the comical turn of events.",
     rating: 4.7,
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800,
     allow: "autoplay; fullscreen",
     sandbox: "allow-scripts allow-same-origin allow-popups allow-forms"
   },
@@ -624,7 +639,9 @@ export const GAMES: Game[] = [
     iframe: "https://ub-g.github.io/embed/duck-life",
     controls: "Up Arrow to jump or fly, Left and Right Arrows to dodge obstacles and train. (Click inside game layout if keys don't respond)",
     rating: 4.8,
-    aspectRatio: "four-three"
+    aspectRatio: "five-four",
+    nativeWidth: 1000,
+    nativeHeight: 800
   },
   {
     id: "snake-io",
