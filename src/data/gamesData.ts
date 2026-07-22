@@ -916,9 +916,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/papas/papaspizzeria/",
     controls: "Mouse clicks and dragging to prepare, bake, slice, and serve pizzas.",
     rating: 4.7,
-    aspectRatio: "four-three",
-    scale: 1.22,
-    transformOrigin: "center 90%"
+    aspectRatio: "four-three"
   },
   {
     id: "papas-freezeria",
@@ -930,9 +928,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/papas/papasfreezeria/",
     controls: "Mouse clicks and dragging to blend milkshakes, pour syrups, and place decorative toppings.",
     rating: 4.8,
-    aspectRatio: "four-three",
-    scale: 1.22,
-    transformOrigin: "center 90%"
+    aspectRatio: "four-three"
   },
   {
     id: "craftmine",
@@ -968,9 +964,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/papas/papasburgeria/index.html",
     controls: "Mouse click and drag to cook burger patties, flip them, and carefully stack buns, toppings, and sauces.",
     rating: 4.7,
-    aspectRatio: "four-three",
-    scale: 1.22,
-    transformOrigin: "center 90%"
+    aspectRatio: "four-three"
   },
   {
     id: "sonic-classic",
