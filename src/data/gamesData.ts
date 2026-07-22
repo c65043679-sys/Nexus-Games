@@ -624,9 +624,7 @@ export const GAMES: Game[] = [
     iframe: "https://ub-g.github.io/embed/duck-life",
     controls: "Up Arrow to jump or fly, Left and Right Arrows to dodge obstacles and train. (Click inside game layout if keys don't respond)",
     rating: 4.8,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "snake-io",
@@ -686,9 +684,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/thebindingofisaac/index.html",
     controls: "WASD to move, Arrow Keys to shoot tears, Space to activate special items, Shift or E for bombs.",
     rating: 4.8,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "douchebag-life",
@@ -700,9 +696,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/douchebag/douchebaglife/index.html",
     controls: "Mouse click to select daily activities, workouts, style options, and talk to characters.",
     rating: 4.7,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "douchebag-workout-2",
@@ -714,9 +708,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/douchebag/douchebagworkout2/index.html",
     controls: "Click on exercise equipment, hit keyboard keys repeatedly as prompted to train, navigate muscle screens.",
     rating: 4.8,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "duck-life-2",
@@ -728,9 +720,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/ducklife/ducklife2/index.html",
     controls: "Arrow keys/WASD to fly, swim, jump, and dodge obstacles during training drills.",
     rating: 4.8,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "duck-life-3",
@@ -742,9 +732,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/ducklife/ducklife3/index.html",
     controls: "Arrow keys or WASD to play training games and guide your duck. Left click to select options.",
     rating: 4.8,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "duck-life-4",
@@ -756,9 +744,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/ducklife/ducklife4/index.html",
     controls: "Arrow keys/WASD to move and train your ducks. Use mouse clicks to manage your squad.",
     rating: 4.9,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "ace-attorney",
@@ -803,9 +789,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/portalflash/index.html",
     controls: "A/D or Arrow Keys to move, W to jump, Mouse cursor to point and fire portals, Q for blue, E for orange portal.",
     rating: 4.8,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "fnaf-4",
@@ -839,9 +823,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/bloonstd5/index.html",
     controls: "Mouse drag to deploy towers, click upgrades, and press Space or Play Button to launch waves.",
     rating: 4.9,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "henry-escaping-the-prison",
@@ -853,9 +835,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/henrystickmin/escapingtheprison/index.html",
     controls: "Mouse click to select tools, make dynamic choices, and interact with the puzzle scenes.",
     rating: 4.8,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "henry-stealing-the-diamond",
@@ -867,9 +847,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/henrystickmin/stealingthediamond/index.html",
     controls: "Mouse click to choose paths, trigger hilarious point-and-click actions, and bypass security.",
     rating: 4.8,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "henry-infiltrating-the-airship",
@@ -881,9 +859,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/henrystickmin/infiltratingtheairship/index.html",
     controls: "Mouse click to select paths, choose weapons/gadgets, and navigate different branches of the storyline.",
     rating: 4.9,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "henry-fleeing-the-complex",
@@ -895,9 +871,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/henrystickmin/fleeingthecomplex/index.html",
     controls: "Mouse click to choose escape strategies, solve dynamic quick-time-events, and secure your escape.",
     rating: 4.9,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "volley-random",
@@ -923,9 +897,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/stickmanhook/index.html",
     controls: "Left click or Spacebar to attach your rope to hooks. Release to swing and fly forward.",
     rating: 4.8,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "papas-pizzeria",
@@ -961,9 +933,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/craftmine/index.html",
     controls: "A and D (or Left/Right arrows) to move. W, Space, or Up arrow to jump. Left click to mine, craft, and build.",
     rating: 4.6,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "paper-io-2",
@@ -975,9 +945,7 @@ export const GAMES: Game[] = [
     iframe: "https://hub-pro.github.io/games/paperio2/index.html",
     controls: "Use your Mouse or Arrow keys to guide your paper square. Circle back to your base to expand your territory.",
     rating: 4.7,
-    aspectRatio: "five-four",
-    nativeWidth: 1000,
-    nativeHeight: 800
+    aspectRatio: "four-three"
   },
   {
     id: "papas-burgeria",

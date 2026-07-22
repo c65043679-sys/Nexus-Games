@@ -189,11 +189,11 @@ export const Play: React.FC = () => {
             isFullscreen 
               ? 'w-screen h-screen rounded-none border-none' 
               : `rounded-3xl shadow-2xl shadow-violet-500/10 border border-white/10 ${
-                  game.aspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto' : 
-                  game.aspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto' : 
-                  game.aspectRatio === 'four-three' ? 'aspect-[4/3] max-w-5xl mx-auto' :
-                  game.aspectRatio === 'five-four' ? 'aspect-[5/4] max-w-5xl mx-auto' :
-                  'aspect-video'
+                  game.aspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto max-h-[72vh]' : 
+                  game.aspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto max-h-[72vh]' : 
+                  game.aspectRatio === 'four-three' ? 'aspect-[4/3] max-w-4xl mx-auto max-h-[72vh]' :
+                  game.aspectRatio === 'five-four' ? 'aspect-[5/4] max-w-4xl mx-auto max-h-[72vh]' :
+                  'aspect-video max-w-5xl mx-auto max-h-[72vh]'
                 }`
           }`}
         >
