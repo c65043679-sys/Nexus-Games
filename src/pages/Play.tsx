@@ -232,7 +232,7 @@ export const Play: React.FC = () => {
                   overflow: 'hidden'
                 } : { 
                   transform: game.scale ? `scale(${game.scale})` : 'none',
-                  transformOrigin: 'center center',
+                  transformOrigin: game.transformOrigin || 'center center',
                   width: game.scale ? `${100 / game.scale}%` : '100%',
                   height: game.scale ? `${100 / game.scale}%` : '100%',
                   position: game.scale ? 'absolute' : 'relative',
