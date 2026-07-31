@@ -89,10 +89,10 @@ const DEFAULT_SETTINGS: SettingsState = {
   autoPlayGames: true,
 
   tabCloak: 'none',
-  customTabTitle: 'Google Classroom',
-  customTabFavicon: 'https://ssl.gstatic.com/classroom/favicon.png',
+  customTabTitle: 'Student Portal',
+  customTabFavicon: 'https://students.aloysius.vic.edu.au/favicon.ico',
   panicKey: 'Backquote',
-  panicUrl: 'https://classroom.google.com',
+  panicUrl: 'https://students.aloysius.vic.edu.au/#?page=/home',
   gameScale: 100,
   uiSoundEffects: true,
   theaterMode: false,

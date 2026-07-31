@@ -1,195 +1,453 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
-import { User as UserIcon, Save, Palette, Bell, Shield, Laptop, Zap, Heart, CheckCircle2 } from 'lucide-react';
+import { useSettings, TAB_CLOAK_PRESETS } from '../components/SettingsContext';
+import { 
+  User as UserIcon, 
+  Save, 
+  Palette, 
+  ShieldAlert, 
+  Zap, 
+  CheckCircle2, 
+  ExternalLink, 
+  Globe, 
+  Sliders, 
+  Maximize2,
+  Volume2,
+  Activity,
+  RotateCcw
+} from 'lucide-react';
 
-const THEME_COLORS = [
-  { name: 'Default Violet', value: '#7c3aed' },
-  { name: 'Emerald', value: '#10b981' },
-  { name: 'Rose', value: '#e11d48' },
-  { name: 'Amber', value: '#d97706' },
-  { name: 'Sky', value: '#0284c7' },
-  { name: 'Fuchsia', value: '#c026d3' },
+const ACCENT_HUES = [
+  { name: 'Nexus Violet', value: '#7c3aed' },
+  { name: 'Neon Cyber', value: '#06b6d4' },
+  { name: 'Emerald Matrix', value: '#10b981' },
+  { name: 'Solar Gold', value: '#f59e0b' },
+  { name: 'Ruby Blaze', value: '#ef4444' },
+  { name: 'Orchid Pink', value: '#ec4899' },
+  { name: 'Deep Ocean', value: '#3b82f6' },
+  { name: 'Obsidian Monochrome', value: '#64748b' },
 ];
 
 export const Settings: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
+  const { settings, updateSetting, updateSettings, resetSettings, triggerPanic } = useSettings();
+  
   const [nickname, setNickname] = useState('');
-  const [themeColor, setThemeColor] = useState('#7c3aed');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
     if (profile) {
       setNickname(profile.nickname || profile.displayName || '');
-      setThemeColor(profile.themeColor || '#7c3aed');
     }
   }, [profile]);
 
-  const handleSave = async () => {
+  const handleSaveProfile = async () => {
     if (!user) return;
     setIsSaving(true);
     try {
       await updateProfile({
         nickname,
-        themeColor,
+        themeColor: settings.themeColor,
       });
-      setMessage('Profile updated successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      setMessage('Profile and preferences synced successfully!');
+      setTimeout(() => setMessage(''), 3500);
     } catch (err: any) {
       console.error(err);
-      setMessage(`Error: ${err.message || 'Updating profile failed'}`);
+      setMessage(`Error: ${err.message || 'Failed to update profile'}`);
       setTimeout(() => setMessage(''), 5000);
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (!user) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-6">
-        <p className="text-slate-400">Please sign in to access settings.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 p-8 max-w-4xl mx-auto space-y-8">
-      <header>
-        <h1 className="text-3xl font-black text-white mb-2">Command Center</h1>
-        <p className="text-slate-400">Customize your Nexus experience and profile preferences.</p>
+    <div className="flex-1 p-6 md:p-10 max-w-5xl mx-auto space-y-10">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+            <Sliders className="w-8 h-8 text-[var(--accent)]" />
+            Command Center
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">
+            Personalize visual themes, emergency panic key redirects, performance options, and profile identity.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={resetSettings}
+            className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+            title="Reset to factory default settings"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset Defaults
+          </button>
+        </div>
       </header>
 
       {message && (
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`p-4 rounded-xl flex items-center gap-3 border ${
-            message.includes('Error') ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+          className={`p-4 rounded-2xl flex items-center gap-3 border ${
+            message.includes('Error') 
+              ? 'bg-red-500/10 border-red-500/20 text-red-400' 
+              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
           }`}
         >
-          <CheckCircle2 className="w-5 h-5" />
-          <span className="font-bold">{message}</span>
+          <CheckCircle2 className="w-5 h-5 shrink-0" />
+          <span className="font-bold text-sm">{message}</span>
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Profile Settings */}
-        <section className="md:col-span-2 space-y-6">
-          <div className="glass-card p-8 rounded-3xl border border-white/10 space-y-8">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
-                <UserIcon className="w-6 h-6 text-violet-400" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Settings Panel */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          {/* SECTION 1: Cloaking & Emergency Panic Mode */}
+          <section className="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6 backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Emergency Panic & Redirect</h2>
+                  <p className="text-xs text-slate-400">Instant stealth redirect and browser tab cloaking</p>
+                </div>
+              </div>
+
+              <button
+                onClick={triggerPanic}
+                className="px-3.5 py-1.5 bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-300 text-xs font-bold rounded-xl transition-all active:scale-95 flex items-center gap-1.5"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Test Panic Key
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+                  Panic Redirect URL
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={settings.panicUrl}
+                    onChange={(e) => updateSetting('panicUrl', e.target.value)}
+                    placeholder="https://students.aloysius.vic.edu.au/#?page=/home"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pl-10 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+                  />
+                  <Globe className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5">
+                  Pressing the panic hotkey will immediately redirect your browser tab to this destination.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+                    Panic Hotkey
+                  </label>
+                  <select
+                    value={settings.panicKey}
+                    onChange={(e) => updateSetting('panicKey', e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+                  >
+                    <option value="Backquote">Tilde / Backtick (` or ~)</option>
+                    <option value="Escape">Escape Key (Esc)</option>
+                    <option value="AltP">Alt + P</option>
+                    <option value="AltZ">Alt + Z</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+                    Browser Tab Cloak Preset
+                  </label>
+                  <select
+                    value={settings.tabCloak}
+                    onChange={(e) => updateSetting('tabCloak', e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+                  >
+                    {TAB_CLOAK_PRESETS.map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {settings.tabCloak === 'custom' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1">Custom Tab Title</label>
+                    <input
+                      type="text"
+                      value={settings.customTabTitle}
+                      onChange={(e) => updateSetting('customTabTitle', e.target.value)}
+                      placeholder="Student Portal"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1">Custom Favicon URL</label>
+                    <input
+                      type="url"
+                      value={settings.customTabFavicon}
+                      onChange={(e) => updateSetting('customTabFavicon', e.target.value)}
+                      placeholder="https://example.com/favicon.ico"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* SECTION 2: Visual Themes & Color Customization */}
+          <section className="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6 backdrop-blur-xl">
+            <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+              <div className="w-10 h-10 rounded-2xl bg-[var(--accent)]/15 border border-[var(--accent)]/30 flex items-center justify-center text-[var(--accent)]">
+                <Palette className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Identity</h2>
-                <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Public Profile Info</p>
+                <h2 className="text-lg font-bold text-white">Visual Themes & Color Palette</h2>
+                <p className="text-xs text-slate-400">Personalize global accent colors and interface highlights</p>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-bold text-slate-400 mb-2">Nexus Nickname</label>
-                <input 
-                  type="text" 
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
-                  placeholder="Enter your handle..."
-                />
-                <p className="text-[10px] text-slate-500 mt-2 font-medium italic">This name will be visible to other players on leaderboards.</p>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">
+                  Accent Color Preset
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {ACCENT_HUES.map((hue) => {
+                    const isSelected = settings.themeColor === hue.value;
+                    return (
+                      <button
+                        key={hue.value}
+                        onClick={() => updateSetting('themeColor', hue.value)}
+                        className={`flex items-center gap-2.5 p-3 rounded-2xl border transition-all text-left ${
+                          isSelected 
+                            ? 'bg-white/10 border-white text-white shadow-lg shadow-black/40 scale-[1.02]' 
+                            : 'bg-black/30 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <div 
+                          className="w-5 h-5 rounded-full border border-white/20 shrink-0" 
+                          style={{ backgroundColor: hue.value }}
+                        />
+                        <span className="text-xs font-bold truncate">{hue.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div className="pt-4">
-                <label className="block text-sm font-bold text-slate-400 mb-4">Core UI Hue</label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                  {THEME_COLORS.map((color) => (
+              <div className="flex items-center gap-4 pt-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Custom Color Hex:
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.themeColor}
+                    onChange={(e) => updateSetting('themeColor', e.value || e.target.value)}
+                    className="w-9 h-9 rounded-xl border border-white/20 bg-transparent cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={settings.themeColor}
+                    onChange={(e) => updateSetting('themeColor', e.target.value)}
+                    className="w-28 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono text-white"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 3: Performance & Gameplay Controls */}
+          <section className="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6 backdrop-blur-xl">
+            <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <Zap className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Performance & Gameplay</h2>
+                <p className="text-xs text-slate-400">Frame rate tools, scaling, and animation optimization</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 divide-y divide-white/5">
+              <div className="flex items-center justify-between pt-2">
+                <div>
+                  <p className="text-sm font-bold text-white flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-emerald-400" />
+                    Live FPS Counter Overlay
+                  </p>
+                  <p className="text-xs text-slate-400">Display real-time FPS and system memory stats in top-right corner</p>
+                </div>
+                <button
+                  onClick={() => updateSetting('showFpsCounter', !settings.showFpsCounter)}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${
+                    settings.showFpsCounter ? 'bg-[var(--accent)]' : 'bg-slate-800'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white transition-all absolute top-1 ${
+                    settings.showFpsCounter ? 'right-1' : 'left-1'
+                  }`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between pt-4">
+                <div>
+                  <p className="text-sm font-bold text-white flex items-center gap-2">
+                    <Maximize2 className="w-4 h-4 text-sky-400" />
+                    Default Game Scaling
+                  </p>
+                  <p className="text-xs text-slate-400">Adjust canvas zoom level inside the player</p>
+                </div>
+                <div className="flex items-center gap-1 bg-black/40 border border-white/10 p-1 rounded-xl">
+                  {[90, 100, 110, 125].map((scale) => (
                     <button
-                      key={color.value}
-                      onClick={() => setThemeColor(color.value)}
-                      className={`h-12 rounded-xl transition-all border-2 flex items-center justify-center ${
-                        themeColor === color.value 
-                          ? 'border-white scale-105 shadow-lg' 
-                          : 'border-transparent opacity-60 hover:opacity-100'
+                      key={scale}
+                      onClick={() => updateSetting('gameScale', scale)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                        settings.gameScale === scale ? 'bg-[var(--accent)] text-white' : 'text-slate-400 hover:text-white'
                       }`}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
                     >
-                      {themeColor === color.value && <div className="w-2 h-2 bg-white rounded-full" />}
+                      {scale}%
                     </button>
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="glass-card p-8 rounded-3xl border border-white/10 space-y-8">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
-                <Zap className="w-6 h-6 text-amber-400" />
+              <div className="flex items-center justify-between pt-4">
+                <div>
+                  <p className="text-sm font-bold text-white">Compact Grid View</p>
+                  <p className="text-xs text-slate-400">Display more games per row on the homepage</p>
+                </div>
+                <button
+                  onClick={() => updateSetting('compactGrid', !settings.compactGrid)}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${
+                    settings.compactGrid ? 'bg-[var(--accent)]' : 'bg-slate-800'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white transition-all absolute top-1 ${
+                    settings.compactGrid ? 'right-1' : 'left-1'
+                  }`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between pt-4">
+                <div>
+                  <p className="text-sm font-bold text-white">Ambient Mesh Gradients</p>
+                  <p className="text-xs text-slate-400">Enable glowing radial background graphics</p>
+                </div>
+                <button
+                  onClick={() => updateSetting('enableMeshGradient', !settings.enableMeshGradient)}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${
+                    settings.enableMeshGradient ? 'bg-[var(--accent)]' : 'bg-slate-800'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white transition-all absolute top-1 ${
+                    settings.enableMeshGradient ? 'right-1' : 'left-1'
+                  }`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between pt-4">
+                <div>
+                  <p className="text-sm font-bold text-white flex items-center gap-2">
+                    <Volume2 className="w-4 h-4 text-violet-400" />
+                    UI Sound Feedback
+                  </p>
+                  <p className="text-xs text-slate-400">Play subtle audio clicks on buttons and triggers</p>
+                </div>
+                <button
+                  onClick={() => updateSetting('uiSoundEffects', !settings.uiSoundEffects)}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${
+                    settings.uiSoundEffects ? 'bg-[var(--accent)]' : 'bg-slate-800'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white transition-all absolute top-1 ${
+                    settings.uiSoundEffects ? 'right-1' : 'left-1'
+                  }`} />
+                </button>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        {/* Sidebar Panel: Account & Profile Sync */}
+        <aside className="space-y-6">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6 backdrop-blur-xl">
+            <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+              <div className="w-10 h-10 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+                <UserIcon className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Performance</h2>
-                <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Optimization & Visuals</p>
+                <h2 className="text-base font-bold text-white">Profile Identity</h2>
+                <p className="text-[11px] text-slate-400">Manage member alias</p>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
+            {user ? (
+              <div className="space-y-4">
                 <div>
-                  <p className="font-bold text-white">Interface Animations</p>
-                  <p className="text-xs text-slate-500">Enable smooth UI transitions and mesh gradients.</p>
+                  <label className="block text-xs font-bold text-slate-400 mb-2">Display Handle</label>
+                  <input
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    placeholder="Enter nickname..."
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  />
                 </div>
-                <div className="w-12 h-6 bg-violet-600 rounded-full relative cursor-pointer">
-                  <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-md" />
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-white">Auto-Play Games</p>
-                  <p className="text-xs text-slate-500">Automatically load game scripts on navigation.</p>
+                <div className="p-4 rounded-2xl bg-black/40 border border-white/5 text-xs space-y-2">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Account ID</span>
+                    <span className="font-mono text-white text-[10px] truncate max-w-[120px]">{user.uid}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Status</span>
+                    <span className="text-emerald-400 font-bold">Active Member</span>
+                  </div>
                 </div>
-                <div className="w-12 h-6 bg-slate-800 rounded-full relative cursor-pointer opacity-50">
-                  <div className="absolute left-1 top-1 w-4 h-4 bg-slate-600 rounded-full" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Info Sidebar */}
-        <aside className="space-y-6">
-          <div className="glass-card p-6 rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent">
-             <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-               <Shield className="w-4 h-4 text-emerald-400" />
-               Account Status
-             </h3>
-             <ul className="space-y-4">
-               <li className="flex items-center justify-between">
-                 <span className="text-xs text-slate-500">Clearance</span>
-                 <span className="text-xs font-bold text-violet-400 px-2 py-0.5 bg-violet-400/10 rounded">LEVEL 1</span>
-               </li>
-               <li className="flex items-center justify-between">
-                 <span className="text-xs text-slate-500">Games Saved</span>
-                 <span className="text-xs font-bold text-white">{profile?.favorites?.length || 0}</span>
-               </li>
-               <li className="flex items-center justify-between">
-                 <span className="text-xs text-slate-500">Sector</span>
-                 <span className="text-xs font-bold text-white">EARTH-Prime</span>
-               </li>
-             </ul>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                  className="w-full py-3.5 bg-[var(--accent)] hover:brightness-110 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-[var(--accent)]/20 active:scale-95 disabled:opacity-50"
+                >
+                  <Save className={`w-4 h-4 ${isSaving ? 'animate-spin' : ''}`} />
+                  {isSaving ? 'Syncing...' : 'Save Profile'}
+                </button>
+              </div>
+            ) : (
+              <div className="text-center py-4 space-y-3">
+                <p className="text-xs text-slate-400">Sign in to sync your saved games and custom settings across devices.</p>
+              </div>
+            )}
           </div>
 
-          <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-3">
-             <button
-               onClick={handleSave}
-               disabled={isSaving}
-               className="w-full py-4 bg-emerald-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-500 active:scale-[0.98] transition-all disabled:opacity-50 shadow-xl shadow-emerald-900/40"
-             >
-               <Save className={`w-5 h-5 ${isSaving ? 'animate-spin' : ''}`} />
-               {isSaving ? 'Saving Changes...' : 'Save Profile'}
-             </button>
+          <div className="p-6 rounded-3xl bg-gradient-to-br from-[var(--accent)]/20 to-transparent border border-[var(--accent)]/30 space-y-3">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-amber-400" />
+              Panic Key Active
+            </h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Pressing <kbd className="px-1.5 py-0.5 rounded bg-black/60 text-white font-mono font-bold">{settings.panicKey}</kbd> anywhere on the site will instantly switch your browser tab to <span className="font-mono text-amber-300 underline">{settings.panicUrl}</span>.
+            </p>
           </div>
         </aside>
       </div>
