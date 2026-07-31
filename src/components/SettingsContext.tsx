@@ -45,12 +45,13 @@ export interface TabCloakPreset {
 
 export const TAB_CLOAK_PRESETS: TabCloakPreset[] = [
   { id: 'none', name: 'Default (Nexus Games)', title: 'Nexus Games', icon: '/favicon.svg' },
+  { id: 'aloysius', name: 'St Aloysius Student Portal', title: 'Student Portal', icon: 'https://students.aloysius.vic.edu.au/favicon.ico' },
   { id: 'google-classroom', name: 'Google Classroom', title: 'Classes', icon: 'https://ssl.gstatic.com/classroom/favicon.png' },
   { id: 'google-drive', name: 'Google Drive', title: 'My Drive - Google Drive', icon: 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png' },
   { id: 'google-docs', name: 'Google Docs', title: 'Untitled document - Google Docs', icon: 'https://ssl.gstatic.com/images/branding/product/1x/docs_2020q4_32dp.png' },
   { id: 'canvas', name: 'Canvas LMS', title: 'Dashboard - Canvas', icon: 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico' },
   { id: 'wikipedia', name: 'Wikipedia', title: 'Wikipedia, the free encyclopedia', icon: 'https://en.wikipedia.org/static/favicon/wikipedia.ico' },
-  { id: 'custom', name: 'Custom Title & Icon', title: 'Google', icon: 'https://www.google.com/favicon.ico' },
+  { id: 'custom', name: 'Custom Title & Icon', title: 'Student Portal', icon: 'https://students.aloysius.vic.edu.au/favicon.ico' },
 ];
 
 export interface SettingsState {
@@ -142,7 +143,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const saved = localStorage.getItem('nexus_settings');
       if (saved) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        if (!parsed.panicUrl || parsed.panicUrl.includes('classroom.google.com') || parsed.panicUrl === 'https://classroom.google.com') {
+          parsed.panicUrl = 'https://students.aloysius.vic.edu.au/#?page=/home';
+        }
+        if (parsed.customTabTitle === 'Google Classroom') {
+          parsed.customTabTitle = 'Student Portal';
+          parsed.customTabFavicon = 'https://students.aloysius.vic.edu.au/favicon.ico';
+        }
+        return { ...DEFAULT_SETTINGS, ...parsed };
       }
     } catch (e) {
       console.error('Failed to parse saved settings', e);
@@ -219,10 +228,14 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [settings.tabCloak, settings.customTabTitle, settings.customTabFavicon]);
 
   const triggerPanic = useCallback(() => {
-    if (settings.panicUrl && settings.panicUrl.trim()) {
-      window.location.href = settings.panicUrl;
-    } else {
-      setIsPanicTriggered(true);
+    let target = settings.panicUrl && settings.panicUrl.trim() ? settings.panicUrl.trim() : 'https://students.aloysius.vic.edu.au/#?page=/home';
+    if (target.includes('classroom.google.com')) {
+      target = 'https://students.aloysius.vic.edu.au/#?page=/home';
+    }
+    try {
+      window.location.href = target;
+    } catch (e) {
+      window.open(target, '_self');
     }
   }, [settings.panicUrl]);
 
