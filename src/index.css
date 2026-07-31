@@ -3,21 +3,28 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --color-bg-dark: #020617;
-  --color-bg-card: rgba(255, 255, 255, 0.05);
-  --color-accent: var(--accent, #8b5cf6);
-  --color-accent-hover: var(--accent-hover, #7c3aed);
+  --color-bg-dark: var(--bg-dark, #020617);
+  --color-bg-card: var(--bg-card, rgba(255, 255, 255, 0.05));
+  --color-accent: var(--accent, #7c3aed);
+  --color-accent-hover: var(--accent-hover, #6d28d9);
   --color-glass-border: rgba(255, 255, 255, 0.1);
 }
 
 :root {
-  background-color: var(--color-bg-dark);
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-rgb: 124, 58, 237;
+  --accent-glow: rgba(124, 58, 237, 0.35);
+  --bg-dark: #020617;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  background-color: var(--bg-dark);
   color: #f8fafc;
+  transition: background-color 0.3s ease;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #1e293b #020617;
+  scrollbar-color: #1e293b var(--bg-dark);
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -38,7 +45,7 @@
 }
 
 .glass-card {
-  background: var(--color-bg-card);
+  background: var(--bg-card);
   backdrop-filter: blur(8px);
   border: 1px solid var(--color-glass-border);
 }
@@ -47,14 +54,15 @@
   position: absolute;
   top: -10%;
   left: -5%;
-  width: 400px;
-  height: 400px;
-  background: var(--accent, #8b5cf6);
-  opacity: 0.15;
+  width: 450px;
+  height: 450px;
+  background: var(--accent, #7c3aed);
+  opacity: 0.2;
   border-radius: 50%;
   filter: blur(120px);
   pointer-events: none;
   z-index: 0;
+  transition: background 0.5s ease;
 }
 
 .mesh-gradient-2 {
@@ -63,9 +71,34 @@
   right: -5%;
   width: 500px;
   height: 500px;
-  background: rgba(37, 99, 235, 0.15);
+  background: rgba(var(--accent-rgb), 0.15);
   border-radius: 50%;
   filter: blur(120px);
   pointer-events: none;
   z-index: 0;
+  transition: background 0.5s ease;
 }
+
+/* Low GPU Mode Optimization */
+.low-gpu .mesh-gradient-1,
+.low-gpu .mesh-gradient-2 {
+  display: none !important;
+}
+
+.low-gpu *,
+.low-gpu .glass,
+.low-gpu .glass-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* No Animations Override */
+.no-animations *,
+.no-animations *::before,
+.no-animations *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+

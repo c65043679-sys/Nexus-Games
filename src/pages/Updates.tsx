@@ -13,6 +13,18 @@ interface UpdateItem {
 
 const UPDATES: UpdateItem[] = [
   {
+    version: "v3.1.0",
+    date: "June 10, 2026",
+    title: "Global Custom Themes & QoL Suite",
+    description: "Launched the complete web application color customization, performance mode engine, and panic mode emergency cloaking system.",
+    type: "system",
+    changes: [
+      "Added 8 visual color theme presets (Nexus Purple, Cyber Neon Cyan, Emerald Matrix, Solar Amber, Ruby Red, Sunset Pink, Deep Ocean, Obsidian Monochrome) plus a custom hex hue picker.",
+      "Synchronized all site UI components (Navbar, Sidebar, Logo badge, Game cards, Highlights, Buttons) to react dynamically to color theme changes.",
+      "Integrated Quality of Life controls including Panic Mode tab cloaking (Google Classroom disguise with shortcut key trigger), real-time FPS counter overlay, sound effects engine, compact grid layout, and low-GPU performance toggles."
+    ]
+  },
+  {
     version: "v3.0.0",
     date: "June 10, 2026",
     title: "Classic Retro & Nostalgia Mega-Drop",

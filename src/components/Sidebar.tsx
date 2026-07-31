@@ -45,11 +45,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
                 }}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-violet-600/20 text-violet-300 border-violet-500/20'
+                    ? 'bg-[var(--accent)]/15 text-white border-[var(--accent)]/30 font-semibold'
                     : 'text-slate-400 border-transparent hover:text-white hover:bg-white/5'
                 }`}
               >
-                <div className={isActive ? 'text-violet-400' : ''}>
+                <div className={isActive ? 'text-[var(--accent)]' : ''}>
                   {cat.icon}
                 </div>
                 <span className={`text-sm ${isActive ? 'font-semibold' : 'font-medium'}`}>
@@ -64,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
       <div className="mt-auto pt-6 border-t border-white/5">
         <Link 
           to="/updates"
-          className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 block text-center hover:text-violet-400 transition-colors cursor-pointer"
+          className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 block text-center hover:text-[var(--accent)] transition-colors cursor-pointer"
         >
           Nexus v2.6.0
         </Link>
@@ -74,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
             to="/updates"
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
               location.pathname === '/updates'
-                ? 'bg-violet-600/20 text-violet-300 border-violet-500/20'
+                ? 'bg-[var(--accent)]/15 text-white border border-[var(--accent)]/30 font-semibold'
                 : 'text-slate-400 border border-transparent hover:text-white hover:bg-white/5'
             }`}
           >
@@ -88,23 +88,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
             rel="noopener noreferrer"
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-transparent text-slate-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer"
           >
-            <PlusCircle className="w-5 h-5 text-violet-400" />
+            <PlusCircle className="w-5 h-5 text-[var(--accent)]" />
             <span className="text-sm font-medium">Request a Game</span>
           </a>
 
-          {user && (
-            <Link 
-              to="/settings"
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                location.pathname === '/settings'
-                  ? 'bg-violet-600/20 text-violet-300 border-violet-500/20'
-                  : 'text-slate-400 border border-transparent hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Settings className="w-5 h-5" />
-              <span className="text-sm font-medium">Settings</span>
-            </Link>
-          )}
+          <Link 
+            to="/settings"
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+              location.pathname === '/settings'
+                ? 'bg-[var(--accent)]/15 text-white border border-[var(--accent)]/30 font-semibold'
+                : 'text-slate-400 border border-transparent hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Settings className="w-5 h-5" />
+            <span className="text-sm font-medium">Settings</span>
+          </Link>
 
           {!user ? (
             <div className="flex flex-col items-center gap-4">

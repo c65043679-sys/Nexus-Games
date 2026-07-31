@@ -29,7 +29,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.03, y: -4 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-violet-500/50 transition-all shadow-lg hover:shadow-violet-500/10"
+      className="group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-[var(--accent)]/50 transition-all shadow-lg hover:shadow-[var(--accent)]/10"
     >
       <button 
         onClick={handleFavoriteClick}
@@ -65,7 +65,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
         </div>
         
         <div className="p-3">
-          <h3 className="text-sm font-bold truncate text-slate-100 group-hover:text-violet-400 transition-colors">
+          <h3 className="text-sm font-bold truncate text-slate-100 group-hover:text-[var(--accent)] transition-colors">
             {game.title}
           </h3>
           <p className="text-[10px] text-slate-500 uppercase tracking-tighter mt-1">{game.category}</p>

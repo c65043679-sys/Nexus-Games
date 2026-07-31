@@ -8,20 +8,19 @@ import { Settings } from './pages/Settings';
 import { Updates } from './pages/Updates';
 import { Category } from './types';
 import { AuthProvider, useAuth } from './components/AuthContext';
+import { SettingsProvider, useSettings } from './components/SettingsContext';
+import { FpsCounter } from './components/FpsCounter';
+import { PanicOverlay } from './components/PanicOverlay';
 
 function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<Category>('all');
   const { profile } = useAuth();
+  const { settings, updateSetting } = useSettings();
 
   React.useEffect(() => {
-    if (profile?.themeColor) {
-      document.documentElement.style.setProperty('--accent', profile.themeColor);
-      // Darken the hover color slightly
-      document.documentElement.style.setProperty('--accent-hover', `${profile.themeColor}dd`);
-    } else {
-      document.documentElement.style.setProperty('--accent', '#7c3aed');
-      document.documentElement.style.setProperty('--accent-hover', '#6d28d9');
+    if (profile?.themeColor && profile.themeColor !== settings.themeColor) {
+      updateSetting('themeColor', profile.themeColor);
     }
   }, [profile?.themeColor]);
 
@@ -29,8 +28,12 @@ function AppContent() {
     <Router>
       <div className="relative min-h-screen bg-bg-dark text-slate-50 font-sans selection:bg-accent selection:text-white overflow-x-hidden">
         {/* Mesh Gradients */}
-        <div className="mesh-gradient-1" />
-        <div className="mesh-gradient-2" />
+        {settings.enableMeshGradient && (
+          <>
+            <div className="mesh-gradient-1" />
+            <div className="mesh-gradient-2" />
+          </>
+        )}
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <Navbar onSearch={setSearchQuery} />
@@ -64,6 +67,10 @@ function AppContent() {
             <p className="mt-2 text-slate-600">Built with passion for the browser gaming community.</p>
           </footer>
         </div>
+
+        {/* Global Performance HUD & Emergency Panic Overlay */}
+        <FpsCounter />
+        <PanicOverlay />
       </div>
     </Router>
   );
@@ -72,7 +79,10 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <SettingsProvider>
+        <AppContent />
+      </SettingsProvider>
     </AuthProvider>
   );
 }
+

@@ -5,6 +5,7 @@ import { GameCard } from '../components/GameCard';
 import { GAMES } from '../data/gamesData';
 import { motion } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
+import { useSettings } from '../components/SettingsContext';
 
 interface HomeProps {
   searchQuery: string;
@@ -13,6 +14,7 @@ interface HomeProps {
 
 export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
   const { profile } = useAuth();
+  const { settings } = useSettings();
   const featuredGames = React.useMemo(() => GAMES.filter(g => g.featured), []);
   const [featuredIndex, setFeaturedIndex] = React.useState(() => 
     Math.floor(Math.random() * featuredGames.length)
@@ -53,12 +55,16 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
 
   const featuredGame = featuredGames[featuredIndex];
 
+  const gridClass = settings.compactGrid
+    ? "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3.5"
+    : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6";
+
   return (
     <div className="flex-1 p-8 overflow-x-hidden space-y-12">
       {featuredGame && activeCategory === 'all' && !searchQuery && (
         <section>
           <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-            <span className="w-1.5 h-6 bg-violet-500 rounded-full"></span>
+            <span className="w-1.5 h-6 bg-[var(--accent)] rounded-full"></span>
             Featured Masterpiece
           </h2>
           <motion.div 
@@ -79,7 +85,7 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
             <div className="absolute inset-0 z-20 p-10 flex flex-col justify-end">
               <div className="max-w-xl">
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="px-2 py-0.5 bg-violet-600 text-[10px] font-bold rounded uppercase tracking-wider text-white">Trending</span>
+                  <span className="px-2 py-0.5 bg-[var(--accent)] text-[10px] font-bold rounded uppercase tracking-wider text-white">Trending</span>
                   <span className="text-slate-300 text-xs font-semibold">{featuredGame.category}</span>
                 </div>
                 <h1 className="text-5xl font-black mb-3 tracking-tight text-white">{featuredGame.title}</h1>
@@ -111,7 +117,7 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
                 {blockedGames.length} Missions 
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className={gridClass}>
               {blockedGames.map((game) => (
                 <GameCard key={game.id} game={game} />
               ))}
@@ -128,7 +134,7 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
                 {unblockedGames.length} Missions
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className={gridClass}>
               {unblockedGames.map((game) => (
                 <GameCard key={game.id} game={game} />
               ))}
@@ -139,7 +145,7 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
         <section>
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold flex items-center gap-2">
-              <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+              <span className="w-1.5 h-6 bg-[var(--accent)] rounded-full"></span>
               {activeCategory === 'all' ? 'Quick Plays' : `${activeCategory} Games`}
             </h2>
             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-white/5 border border-white/10 px-3 py-1 rounded-full">
@@ -148,7 +154,7 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
           </div>
           
           {filteredGames.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className={gridClass}>
               {filteredGames.map((game) => (
                 <GameCard key={game.id} game={game} />
               ))}
@@ -171,3 +177,4 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
     </div>
   );
 };
+
