@@ -71,13 +71,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userDoc = await getDoc(userRef);
         
         if (!userDoc.exists()) {
-          let activeNickname = localStorage.getItem('username') || user.displayName || 'Nexus Explorer';
-          if (containsProfanity(activeNickname)) {
-            activeNickname = 'Nexus Explorer';
-            localStorage.removeItem('username');
-          } else {
-            localStorage.setItem('username', activeNickname);
+          let activeNickname = 'Nexus Explorer';
+          const savedLocal = localStorage.getItem('username');
+          if (savedLocal && !containsProfanity(savedLocal)) {
+            activeNickname = savedLocal.trim();
           }
+          localStorage.setItem('username', activeNickname);
+
           const newProfile = {
             uid: user.uid,
             displayName: activeNickname,
@@ -90,19 +90,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           await setDoc(userRef, newProfile);
         } else {
-          // Migration & sync for existing users: prioritize saved Firestore nickname/displayName
+          // Sync for existing users: prioritize saved Firestore nickname/displayName
           const data = userDoc.data();
-          let activeNickname = data?.nickname || data?.displayName || localStorage.getItem('username') || user.displayName || 'Nexus Explorer';
-          if (activeNickname && containsProfanity(activeNickname)) {
+          let activeNickname = data?.nickname || data?.displayName || 'Nexus Explorer';
+          if (containsProfanity(activeNickname)) {
             activeNickname = 'Nexus Explorer';
-            localStorage.removeItem('username');
-          } else {
-            localStorage.setItem('username', activeNickname);
           }
+          localStorage.setItem('username', activeNickname);
+
           const updates: any = {};
           if (!data?.favorites) updates.favorites = [];
           if (!data?.uid) updates.uid = user.uid;
-          if (activeNickname && activeNickname !== data?.nickname) {
+          if (activeNickname !== data?.nickname || activeNickname !== data?.displayName) {
             updates.nickname = activeNickname;
             updates.displayName = activeNickname;
           }

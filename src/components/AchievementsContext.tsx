@@ -375,12 +375,8 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         updatedAt: new Date().toISOString()
       }, { merge: true }).catch(() => {});
 
-      const activeName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || user.displayName || 'Nexus Explorer';
-
-      setDoc(doc(db, 'users', user.uid), {
+      const userDocData: any = {
         uid: user.uid,
-        displayName: activeName,
-        nickname: activeName,
         email: user.email,
         photoURL: user.photoURL || localStorage.getItem('userpic') || null,
         totalScore: totalScoreVal,
@@ -390,7 +386,14 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         achievementsCount: Object.keys(unlocked).length,
         levelTitle: currentLevelTitle,
         updatedAt: new Date().toISOString()
-      }, { merge: true }).catch(() => {});
+      };
+
+      if (profile?.nickname) {
+        userDocData.nickname = profile.nickname;
+        userDocData.displayName = profile.nickname;
+      }
+
+      setDoc(doc(db, 'users', user.uid), userDocData, { merge: true }).catch(() => {});
     }
   }, [unlocked, progressData, gamePoints, gamesPlayed, user, profile]);
 
