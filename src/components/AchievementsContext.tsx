@@ -231,6 +231,7 @@ interface AchievementsContextType {
   levelTitle: string;
   unlockAchievement: (id: string) => void;
   unlockAllAchievements: () => void;
+  wipeAllProgress: () => Promise<void>;
   incrementProgress: (id: string, amount?: number) => void;
   isUnlocked: (id: string) => boolean;
   getProgress: (id: string) => number;
@@ -292,25 +293,37 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const [activeToast, setActiveToast] = useState<ToastNotification | null>(null);
 
-  // Sync with Firestore if logged in
+  // Sync with Firestore if logged in; clear state when logged out
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setUnlocked({});
+      setProgressData({});
+      setGamePoints(0);
+      setGamesPlayed(0);
+      try {
+        localStorage.removeItem('nexus_achievements');
+        localStorage.removeItem('nexus_achievements_progress');
+        localStorage.removeItem('nexus_game_points');
+        localStorage.removeItem('nexus_games_played');
+      } catch (e) {
+        console.error(e);
+      }
+      return;
+    }
+
     try {
       const unsub = onSnapshot(doc(db, 'users', user.uid, 'data', 'achievements'), (snap) => {
         if (snap.exists()) {
           const remoteData = snap.data();
-          if (remoteData.unlocked) {
-            setUnlocked(prev => ({ ...prev, ...remoteData.unlocked }));
-          }
-          if (remoteData.progress) {
-            setProgressData(prev => ({ ...prev, ...remoteData.progress }));
-          }
-          if (typeof remoteData.gamePoints === 'number') {
-            setGamePoints(remoteData.gamePoints);
-          }
-          if (typeof remoteData.gamesPlayed === 'number') {
-            setGamesPlayed(remoteData.gamesPlayed);
-          }
+          setUnlocked(remoteData.unlocked || {});
+          setProgressData(remoteData.progress || {});
+          setGamePoints(typeof remoteData.gamePoints === 'number' ? remoteData.gamePoints : 0);
+          setGamesPlayed(typeof remoteData.gamesPlayed === 'number' ? remoteData.gamesPlayed : 0);
+        } else {
+          setUnlocked({});
+          setProgressData({});
+          setGamePoints(0);
+          setGamesPlayed(0);
         }
       }, (err) => console.warn('Achievements sync offline', err));
       return () => unsub();
@@ -319,8 +332,10 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [user]);
 
-  // Persist locally
+  // Persist locally for active user
   useEffect(() => {
+    if (!user) return;
+
     try {
       localStorage.setItem('nexus_achievements', JSON.stringify(unlocked));
       localStorage.setItem('nexus_achievements_progress', JSON.stringify(progressData));
@@ -331,10 +346,13 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
 
     if (user) {
-      const totalScoreVal = Object.keys(unlocked).reduce((acc, id) => {
+      const currentXp = Object.keys(unlocked).reduce((acc, id) => {
         const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
         return acc + (ach ? ach.xp : 0);
-      }, 0) + gamePoints;
+      }, 0);
+      const totalScoreVal = currentXp + gamePoints;
+      const currentLevel = Math.floor(totalScoreVal / 250) + 1;
+      const currentLevelTitle = LEVEL_TITLES[Math.min(currentLevel - 1, LEVEL_TITLES.length - 1)];
 
       setDoc(doc(db, 'users', user.uid, 'data', 'achievements'), {
         unlocked,
@@ -344,14 +362,20 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         updatedAt: new Date().toISOString()
       }, { merge: true }).catch(() => {});
 
+      const activeName = localStorage.getItem('username') || user.displayName || 'Nexus Explorer';
+
       setDoc(doc(db, 'users', user.uid), {
-        displayName: user.displayName || 'Nexus Player',
+        uid: user.uid,
+        displayName: activeName,
+        nickname: activeName,
         email: user.email,
-        photoURL: user.photoURL,
+        photoURL: user.photoURL || localStorage.getItem('userpic') || null,
         totalScore: totalScoreVal,
+        totalXp: currentXp,
         gamePoints,
         gamesPlayed,
         achievementsCount: Object.keys(unlocked).length,
+        levelTitle: currentLevelTitle,
         updatedAt: new Date().toISOString()
       }, { merge: true }).catch(() => {});
     }
@@ -431,6 +455,52 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [settings.uiSoundEffects]);
 
+  const wipeAllProgress = useCallback(async () => {
+    setUnlocked({});
+    setProgressData({});
+    setGamePoints(0);
+    setGamesPlayed(0);
+
+    try {
+      localStorage.removeItem('nexus_achievements');
+      localStorage.removeItem('nexus_achievements_progress');
+      localStorage.removeItem('nexus_game_points');
+      localStorage.removeItem('nexus_games_played');
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (user) {
+      try {
+        await setDoc(doc(db, 'users', user.uid, 'data', 'achievements'), {
+          unlocked: {},
+          progress: {},
+          gamePoints: 0,
+          gamesPlayed: 0,
+          updatedAt: new Date().toISOString()
+        });
+
+        const activeName = localStorage.getItem('username') || user.displayName || 'Nexus Explorer';
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          displayName: activeName,
+          nickname: activeName,
+          email: user.email,
+          photoURL: user.photoURL || null,
+          totalScore: 0,
+          totalXp: 0,
+          gamePoints: 0,
+          gamesPlayed: 0,
+          achievementsCount: 0,
+          levelTitle: LEVEL_TITLES[0],
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (fErr) {
+        console.warn('Error wiping remote achievements:', fErr);
+      }
+    }
+  }, [user]);
+
   const incrementProgress = useCallback((id: string, amount: number = 1) => {
     if (unlocked[id]) return;
 
@@ -464,6 +534,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       levelTitle,
       unlockAchievement,
       unlockAllAchievements,
+      wipeAllProgress,
       incrementProgress,
       isUnlocked,
       getProgress,

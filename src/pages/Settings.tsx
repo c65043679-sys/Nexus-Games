@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
 import { useSettings, TAB_CLOAK_PRESETS, CANVAS_THEMES } from '../components/SettingsContext';
 import { useAchievements } from '../components/AchievementsContext';
-import { validateNickname } from '../utils/profanityFilter';
+import { validateNickname, checkNicknameUniqueness } from '../utils/profanityFilter';
 import { 
   User as UserIcon, 
   Save, 
@@ -22,7 +22,9 @@ import {
   Sparkles,
   Layers,
   Circle,
-  Eye
+  Eye,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 
 const ACCENT_HUES = [
@@ -40,7 +42,7 @@ const ACCENT_HUES = [
 export const Settings: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
   const { settings, updateSetting, updateSettings, resetSettings, triggerPanic: rawTriggerPanic } = useSettings();
-  const { unlockAchievement } = useAchievements();
+  const { unlockAchievement, wipeAllProgress } = useAchievements();
 
   const triggerPanic = () => {
     try { unlockAchievement('panic_agent'); } catch (e) {}
@@ -49,6 +51,24 @@ export const Settings: React.FC = () => {
   const [nickname, setNickname] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [showWipeModal, setShowWipeModal] = useState(false);
+  const [isWipingProgress, setIsWipingProgress] = useState(false);
+
+  const handleWipeAllProgress = async () => {
+    setIsWipingProgress(true);
+    try {
+      await wipeAllProgress();
+      setMessage('All account progress, achievements, game points, and leaderboard standings have been wiped.');
+      setShowWipeModal(false);
+      setTimeout(() => setMessage(''), 5000);
+    } catch (err) {
+      console.error(err);
+      setMessage('Error wiping progress.');
+      setTimeout(() => setMessage(''), 5000);
+    } finally {
+      setIsWipingProgress(false);
+    }
+  };
 
   useEffect(() => {
     if (profile) {
@@ -68,6 +88,14 @@ export const Settings: React.FC = () => {
 
     setIsSaving(true);
     try {
+      const uniqueness = await checkNicknameUniqueness(nickname.trim(), user.uid);
+      if (!uniqueness.isUnique) {
+        setMessage(`Error: ${uniqueness.error || 'Nickname is already taken.'}`);
+        setTimeout(() => setMessage(''), 5000);
+        setIsSaving(false);
+        return;
+      }
+
       await updateProfile({
         nickname: nickname.trim(),
         displayName: nickname.trim(),
@@ -536,8 +564,75 @@ export const Settings: React.FC = () => {
               Pressing <kbd className="px-1.5 py-0.5 rounded bg-black/60 text-white font-mono font-bold">{settings.panicKey}</kbd> anywhere on the site will instantly switch your browser tab to <span className="font-mono text-amber-300 underline">{settings.panicUrl}</span>.
             </p>
           </div>
+
+          {/* Danger Zone: Wipe Account Progress */}
+          <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-6 space-y-4 backdrop-blur-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">Wipe Account Progress</h3>
+                <p className="text-[11px] text-slate-400 font-medium">Reset achievements, points & ranks</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Permanently clear all unlocked achievements, XP, game points, level rank, and leaderboard standings.
+            </p>
+
+            <button
+              onClick={() => setShowWipeModal(true)}
+              className="w-full py-3 bg-red-600/80 hover:bg-red-600 text-white font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-600/20 active:scale-95 cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+              Wipe Account Progress
+            </button>
+          </div>
         </aside>
       </div>
+
+      {/* Wipe Confirmation Modal */}
+      {showWipeModal && (
+        <div className="fixed inset-0 z-[100000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-slate-900 border border-red-500/30 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl text-white"
+          >
+            <div className="flex items-center gap-3 text-red-400">
+              <div className="w-12 h-12 rounded-2xl bg-red-500/20 border border-red-500/30 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black">Wipe All Progress?</h3>
+                <p className="text-xs text-slate-400">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed bg-black/40 p-4 rounded-2xl border border-white/5">
+              Are you sure you want to completely wipe your account progress? All unlocked achievements, XP, accumulated game points, level rank, and leaderboard entries will be deleted.
+            </p>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => setShowWipeModal(false)}
+                disabled={isWipingProgress}
+                className="flex-1 py-3 bg-white/10 hover:bg-white/15 text-white font-bold text-xs rounded-xl transition-all cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleWipeAllProgress}
+                disabled={isWipingProgress}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-600/30 active:scale-95 cursor-pointer disabled:opacity-50"
+              >
+                {isWipingProgress ? 'Wiping...' : 'Yes, Wipe Progress'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

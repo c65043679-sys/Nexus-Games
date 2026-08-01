@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, signInWithCredential } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
+import { containsProfanity } from '../utils/profanityFilter';
 
 interface UserProfile {
   uid: string;
@@ -70,20 +71,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userDoc = await getDoc(userRef);
         
         if (!userDoc.exists()) {
+          let activeNickname = localStorage.getItem('username') || user.displayName || 'Nexus Explorer';
+          if (containsProfanity(activeNickname)) {
+            activeNickname = 'Nexus Explorer';
+            localStorage.removeItem('username');
+          }
           const newProfile = {
             uid: user.uid,
-            displayName: user.displayName || 'Nexus Explorer',
+            displayName: activeNickname,
+            nickname: activeNickname,
             email: user.email,
             photoURL: user.photoURL,
             favorites: [],
             createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
           };
           await setDoc(userRef, newProfile);
         } else {
-          // Migration for existing users without favorites field
+          // Migration & sync for existing users
           const data = userDoc.data();
-          if (!data?.favorites) {
-            await updateDoc(userRef, { favorites: [] });
+          let activeNickname = localStorage.getItem('username') || data?.nickname || data?.displayName || user.displayName;
+          if (activeNickname && containsProfanity(activeNickname)) {
+            activeNickname = 'Nexus Explorer';
+            localStorage.removeItem('username');
+          }
+          const updates: any = {};
+          if (!data?.favorites) updates.favorites = [];
+          if (!data?.uid) updates.uid = user.uid;
+          if (activeNickname && activeNickname !== data?.nickname) {
+            updates.nickname = activeNickname;
+            updates.displayName = activeNickname;
+          }
+          if (Object.keys(updates).length > 0) {
+            await setDoc(userRef, updates, { merge: true });
           }
         }
 
@@ -122,6 +142,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.removeItem('isAdmin');
     localStorage.removeItem("username");
     localStorage.removeItem("userpic");
+    localStorage.removeItem("nexus_achievements");
+    localStorage.removeItem("nexus_achievements_progress");
+    localStorage.removeItem("nexus_game_points");
+    localStorage.removeItem("nexus_games_played");
     return signOut(auth);
   };
 
@@ -158,9 +182,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProfile = async (data: Partial<UserProfile>) => {
+    if (data.nickname) {
+      localStorage.setItem('username', data.nickname);
+    }
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
-    await updateDoc(userRef, data);
+    await setDoc(userRef, {
+      ...data,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
   };
 
   const deleteAccount = async () => {

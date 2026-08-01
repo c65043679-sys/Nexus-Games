@@ -19,8 +19,8 @@ import {
 import { useAuth } from '../components/AuthContext';
 import { useAchievements } from '../components/AchievementsContext';
 import { db } from '../lib/firebase';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { validateNickname } from '../utils/profanityFilter';
+import { collection, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { validateNickname, checkNicknameUniqueness, containsProfanity } from '../utils/profanityFilter';
 
 export interface LeaderboardPlayer {
   uid: string;
@@ -84,9 +84,22 @@ export const Leaderboard: React.FC = () => {
           const pGp = typeof data.gamePoints === 'number' ? data.gamePoints : (data.gamesPlayed || 0) * 50;
           const pTot = typeof data.totalScore === 'number' ? data.totalScore : (pXp + pGp);
 
+          let playerDisplayName = data.nickname || data.displayName || 'Nexus Explorer';
+          
+          // Auto-sanitize bad word names
+          if (containsProfanity(playerDisplayName)) {
+            playerDisplayName = 'Nexus Explorer';
+            // Auto-reset in Firestore database
+            setDoc(doc(db, 'users', playerUid), {
+              nickname: 'Nexus Explorer',
+              displayName: 'Nexus Explorer',
+              updatedAt: new Date().toISOString()
+            }, { merge: true }).catch(() => {});
+          }
+
           firestoreList.push({
             uid: playerUid,
-            displayName: data.nickname || data.displayName || 'Nexus Explorer',
+            displayName: playerDisplayName,
             email: data.email,
             photoURL: data.photoURL,
             totalScore: pTot,
@@ -111,7 +124,13 @@ export const Leaderboard: React.FC = () => {
 
       if (!isCurrentOwner) {
         const currentUid = user?.uid || 'current_active_user';
-        const currentName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'You (Nexus Gamer)';
+        let currentName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'You (Nexus Gamer)';
+        
+        if (containsProfanity(currentName)) {
+          currentName = 'Nexus Explorer';
+          localStorage.setItem('username', 'Nexus Explorer');
+        }
+
         const unlockedCount = Object.keys(unlocked).length;
 
         realMap.set(currentUid, {
@@ -165,6 +184,14 @@ export const Leaderboard: React.FC = () => {
     setIsSavingNickname(true);
 
     try {
+      // Check uniqueness against existing leaderboard players / Firestore users
+      const uniqueness = await checkNicknameUniqueness(cleanNickname, user?.uid);
+      if (!uniqueness.isUnique) {
+        setNicknameError(uniqueness.error || 'That nickname is already taken.');
+        setIsSavingNickname(false);
+        return;
+      }
+
       // 1. Save to Local Storage for instant persistence
       localStorage.setItem('username', cleanNickname);
 
@@ -178,10 +205,11 @@ export const Leaderboard: React.FC = () => {
         // Also update Firestore users document explicitly
         try {
           const userRef = doc(db, 'users', user.uid);
-          await updateDoc(userRef, {
+          await setDoc(userRef, {
             nickname: cleanNickname,
-            displayName: cleanNickname
-          });
+            displayName: cleanNickname,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
         } catch (fErr) {
           console.warn('Firestore doc sync error:', fErr);
         }
