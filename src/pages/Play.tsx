@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Info, Gamepad2, Maximize2, Minimize2, Save, CheckCircle2, Heart, Zap, Moon, ZoomIn } from 'lucide-react';
-import { GAMES } from '../data/gamesData';
+import { ChevronLeft, Info, Gamepad2, Maximize2, Minimize2, Save, CheckCircle2, Heart, Zap, Moon, ZoomIn, Crown } from 'lucide-react';
+import { getAllGames } from '../utils/getAllGames';
 import { useAuth } from '../components/AuthContext';
 import { useSettings } from '../components/SettingsContext';
 import { db } from '../lib/firebase';
@@ -10,9 +10,11 @@ import { GameCard } from '../components/GameCard';
 
 export const Play: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, profile, toggleFavorite } = useAuth();
+  const { user, profile, toggleFavorite, isOwner } = useAuth();
   const { settings, updateSetting } = useSettings();
-  const game = GAMES.find((g) => g.id === id);
+  const allGames = getAllGames();
+  const game = allGames.find((g) => g.id === id);
+  const godModeAura = localStorage.getItem('nexus_godmode_aura') === 'true';
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -62,7 +64,7 @@ export const Play: React.FC = () => {
 
   // Get related games (same category) and prioritize top/featured ones
   const relatedGames = game 
-    ? GAMES.filter(g => g.category === game.category && g.id !== game.id)
+    ? allGames.filter(g => g.category === game.category && g.id !== game.id)
         .sort((a, b) => {
           if (a.featured && !b.featured) return -1;
           if (!a.featured && b.featured) return 1;

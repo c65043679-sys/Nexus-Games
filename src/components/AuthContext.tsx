@@ -18,9 +18,11 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   isAdmin: boolean;
+  isOwner: boolean;
   signIn: () => Promise<void>;
   logout: () => Promise<void>;
   loginAsAdmin: (password: string) => boolean;
+  unlockOwner: (passcode: string) => boolean;
   toggleFavorite: (gameId: string) => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
   deleteAccount: () => Promise<void>;
@@ -35,6 +37,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(() => {
     return sessionStorage.getItem('isAdmin') === 'true';
   });
+  const [isOwnerUnlocked, setIsOwnerUnlocked] = useState(() => {
+    return sessionStorage.getItem('isOwner') === 'true';
+  });
+
+  const isOwner = user?.email?.toLowerCase() === 'c65043679@gmail.com';
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;
@@ -121,6 +128,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginAsAdmin = (password: string) => {
     if (password === '280511') {
       setIsAdmin(true);
+      setIsOwnerUnlocked(true);
+      sessionStorage.setItem('isAdmin', 'true');
+      sessionStorage.setItem('isOwner', 'true');
+      return true;
+    }
+    return false;
+  };
+
+  const unlockOwner = (passcode: string) => {
+    if (passcode === '280511' || passcode === 'owner' || passcode === 'nexusowner') {
+      setIsOwnerUnlocked(true);
+      setIsAdmin(true);
+      sessionStorage.setItem('isOwner', 'true');
       sessionStorage.setItem('isAdmin', 'true');
       return true;
     }
@@ -168,9 +188,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profile, 
       loading, 
       isAdmin, 
+      isOwner,
       signIn, 
       logout, 
       loginAsAdmin,
+      unlockOwner,
       toggleFavorite,
       updateProfile,
       deleteAccount

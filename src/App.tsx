@@ -6,11 +6,14 @@ import { Home } from './pages/Home';
 import { Play } from './pages/Play';
 import { Settings } from './pages/Settings';
 import { Updates } from './pages/Updates';
+import { OwnerVault } from './pages/OwnerVault';
 import { Category } from './types';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import { SettingsProvider, useSettings } from './components/SettingsContext';
 import { FpsCounter } from './components/FpsCounter';
 import { PanicOverlay } from './components/PanicOverlay';
+import { BroadcastBanner } from './components/BroadcastBanner';
+import { MatrixRainCanvas } from './components/MatrixRainCanvas';
 
 function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +30,9 @@ function AppContent() {
   return (
     <Router>
       <div className="relative min-h-screen bg-bg-dark text-slate-50 font-sans selection:bg-accent selection:text-white overflow-x-hidden">
+        {/* Matrix Rain Canvas */}
+        <MatrixRainCanvas />
+
         {/* Mesh Gradients */}
         {settings.enableMeshGradient && (
           <>
@@ -36,6 +42,7 @@ function AppContent() {
         )}
 
         <div className="relative z-10 flex flex-col min-h-screen">
+          <BroadcastBanner />
           <Navbar onSearch={setSearchQuery} />
           
           <main className="flex flex-1 overflow-hidden">
@@ -58,6 +65,7 @@ function AppContent() {
                 <Route path="/play/:id" element={<Play />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/updates" element={<Updates />} />
+                <Route path="/owner-vault" element={<OwnerVault />} />
               </Routes>
             </div>
           </main>

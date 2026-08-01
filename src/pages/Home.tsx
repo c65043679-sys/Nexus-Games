@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Game, Category } from '../types';
 import { GameCard } from '../components/GameCard';
-import { GAMES } from '../data/gamesData';
+import { getAllGames } from '../utils/getAllGames';
 import { motion } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
 import { useSettings } from '../components/SettingsContext';
@@ -15,12 +15,22 @@ interface HomeProps {
 export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
   const { profile } = useAuth();
   const { settings } = useSettings();
-  const featuredGames = React.useMemo(() => GAMES.filter(g => g.featured), []);
-  const [featuredIndex, setFeaturedIndex] = React.useState(() => 
-    Math.floor(Math.random() * featuredGames.length)
+  const [allGamesList, setAllGamesList] = useState<Game[]>(() => getAllGames());
+
+  useEffect(() => {
+    const handleGamesUpdate = () => {
+      setAllGamesList(getAllGames());
+    };
+    window.addEventListener('nexus_games_updated', handleGamesUpdate);
+    return () => window.removeEventListener('nexus_games_updated', handleGamesUpdate);
+  }, []);
+
+  const featuredGames = useMemo(() => allGamesList.filter(g => g.featured), [allGamesList]);
+  const [featuredIndex, setFeaturedIndex] = useState(() => 
+    Math.floor(Math.random() * (featuredGames.length || 1))
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (featuredGames.length <= 1) return;
     
     // Rotate every 10 minutes (600,000ms)
@@ -31,7 +41,7 @@ export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
     return () => clearInterval(interval);
   }, [featuredGames.length]);
 
-  const filteredGames = GAMES.filter((game) => {
+  const filteredGames = allGamesList.filter((game) => {
     const matchesSearch = game.title.toLowerCase().includes(searchQuery.toLowerCase());
     
     let matchesCategory = false;

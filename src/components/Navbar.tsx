@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Heart, User as UserIcon, PlusCircle, ShieldAlert } from 'lucide-react';
+import { Search, Heart, User as UserIcon, PlusCircle, ShieldAlert, Crown } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useSettings } from './SettingsContext';
@@ -9,7 +9,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
-  const { user, profile, signIn } = useAuth();
+  const { user, profile, signIn, isOwner } = useAuth();
   const { triggerPanic } = useSettings();
   const location = useLocation();
   const navigate = useNavigate();
@@ -42,7 +42,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
         />
       </div>
 
-      <nav className="flex items-center gap-4 sm:gap-6">
+      <nav className="flex items-center gap-3 sm:gap-5">
+        {isOwner && (
+          <Link
+            to="/owner-vault"
+            title="Owner Overlord Vault & Control Deck"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-black transition-all active:scale-95 shadow-lg bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-black shadow-amber-500/20 animate-pulse"
+          >
+            <Crown className="w-4 h-4 text-amber-950 fill-amber-950" />
+            <span>👑 Owner Vault</span>
+          </Link>
+        )}
+
         <button
           onClick={triggerPanic}
           title="Panic Button (Quick Hide)"
@@ -56,7 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
           href="https://forms.gle/vbbxSHpEHsYwJyH96"
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden md:flex items-center gap-1.5 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 hover:text-white text-slate-300 text-xs font-bold rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
+          className="hidden lg:flex items-center gap-1.5 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 hover:text-white text-slate-300 text-xs font-bold rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
         >
           <PlusCircle className="w-4 h-4 text-[var(--accent)]" />
           Request Games
@@ -65,10 +76,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
         {user ? (
           <div className="flex items-center gap-3">
             <div className="hidden sm:block text-right">
-              <p className="text-xs font-bold text-white leading-none mb-1">{profile?.nickname || user.displayName}</p>
-              <p className="text-[10px] text-slate-500 leading-none">Nexus Member</p>
+              <p className="text-xs font-bold text-white leading-none mb-1 flex items-center gap-1 justify-end">
+                {isOwner && <Crown className="w-3 h-3 text-amber-400 inline" />}
+                {profile?.nickname || user.displayName}
+              </p>
+              <p className="text-[10px] text-amber-400/90 font-mono font-bold leading-none">
+                {isOwner ? '👑 PLATINUM OWNER' : 'Nexus Member'}
+              </p>
             </div>
-            <Link to="/settings" className="w-10 h-10 rounded-full border-2 border-[var(--accent)]/30 overflow-hidden bg-slate-800 cursor-pointer hover:border-[var(--accent)] transition-colors">
+            <Link to="/settings" className={`relative w-10 h-10 rounded-full border-2 overflow-hidden bg-slate-800 cursor-pointer transition-all ${
+              isOwner ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/20' : 'border-[var(--accent)]/30 hover:border-[var(--accent)]'
+            }`}>
               {user.photoURL ? (
                 <img src={user.photoURL} alt={profile?.nickname || user.displayName || ''} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
