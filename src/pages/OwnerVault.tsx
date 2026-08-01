@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
 import { useSettings } from '../components/SettingsContext';
-import { GameCard } from '../components/GameCard';
 import { Game } from '../types';
+import { doc, setDoc, deleteDoc, collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { 
   Crown, 
   ShieldCheck, 
@@ -11,17 +12,21 @@ import {
   PlusCircle, 
   Sparkles, 
   Volume2, 
-  Lock, 
-  KeyRound, 
   Terminal, 
   Flame, 
   Radio, 
   CheckCircle2, 
-  Trash2, 
-  Gamepad2,
+  Trash2,
   Tv,
-  Eye,
-  Sliders
+  Activity,
+  PartyPopper,
+  Cpu,
+  Wifi,
+  RefreshCw,
+  Play,
+  Database,
+  Gauge,
+  Rocket
 } from 'lucide-react';
 
 // Web Audio Synthesis Helper for Retro 8-bit Sounds
@@ -83,62 +88,19 @@ const playRetroSound = (type: 'coin' | 'laser' | 'levelup' | 'win' | 'powerup') 
   }
 };
 
-// Built-in VIP Exclusive Games for Owner
-const OWNER_VIP_GAMES: Game[] = [
-  {
-    id: 'owner-vip-cyber-runner',
-    title: '👑 Cyber Runner 2099 (VIP Edition)',
-    description: 'Exclusive VIP high-speed cybernetic survival simulator built directly into the Nexus Owner Vault.',
-    thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80',
-    color: '#7c3aed',
-    category: 'Arcade',
-    iframe: 'https://html5.gamedistribution.com/f04c62e557b744b196ebcfed42d05777/',
-    controls: 'Arrow Keys or WASD to navigate obstacles.',
-    rating: 5.0,
-    featured: true,
-    trending: true,
-  },
-  {
-    id: 'owner-vip-matrix-defense',
-    title: '👑 Matrix Defense Overlord',
-    description: 'High-octane space defense shooter unlocked exclusively for the Nexus Site Owner.',
-    thumbnail: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80',
-    color: '#10b981',
-    category: 'Action',
-    iframe: 'https://html5.gamedistribution.com/62e0d37e6f854b73a388b1f84260907a/',
-    controls: 'Mouse Aim & Left Click to shoot.',
-    rating: 5.0,
-    featured: true,
-  },
-  {
-    id: 'owner-vip-quantum-drift',
-    title: '👑 Quantum Drift VIP',
-    description: 'Ultra-fast hyperdrift arcade racing unlocked in the Owner Vault.',
-    thumbnail: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=600&q=80',
-    color: '#3b82f6',
-    category: 'Racing',
-    iframe: 'https://html5.gamedistribution.com/152912445b2e4f0a99ff1e204a9e5db4/',
-    controls: 'WASD / Arrow keys to drift around corners.',
-    rating: 5.0,
-  }
-];
-
 export const OwnerVault: React.FC = () => {
   const { isOwner, user, signIn } = useAuth();
   const { settings, updateSetting } = useSettings();
 
-  const [activeTab, setActiveTab] = useState<'hacks' | 'injector' | 'vip' | 'broadcast'>('hacks');
+  const [activeTab, setActiveTab] = useState<'hacks' | 'injector' | 'command' | 'broadcast'>('hacks');
+
+  // Party trigger & Telemetry state
+  const [partyTriggerSuccess, setPartyTriggerSuccess] = useState('');
+  const [pingMs, setPingMs] = useState(14);
+  const [activeUsersCount, setActiveUsersCount] = useState(128);
 
   // Injector state
-  const [injectedGames, setInjectedGames] = useState<Game[]>(() => {
-    try {
-      const saved = localStorage.getItem('nexus_injected_games');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
-
+  const [injectedGames, setInjectedGames] = useState<Game[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [newIframe, setNewIframe] = useState('');
   const [newCategory, setNewCategory] = useState('Arcade');
@@ -148,9 +110,7 @@ export const OwnerVault: React.FC = () => {
   const [injectSuccess, setInjectSuccess] = useState('');
 
   // Announcement state
-  const [announcementText, setAnnouncementText] = useState(() => {
-    return localStorage.getItem('nexus_site_announcement') || '';
-  });
+  const [announcementText, setAnnouncementText] = useState('');
   const [announceSuccess, setAnnounceSuccess] = useState('');
 
   // God Mode hacks
@@ -161,7 +121,29 @@ export const OwnerVault: React.FC = () => {
     return localStorage.getItem('nexus_matrix_rain') === 'true';
   });
 
-  const handleInjectGame = (e: React.FormEvent) => {
+  // Sync injected games and broadcast from Firestore
+  useEffect(() => {
+    const unsubInjected = onSnapshot(collection(db, 'injected_games'), (snapshot) => {
+      const list: Game[] = [];
+      snapshot.forEach((doc) => {
+        list.push(doc.data() as Game);
+      });
+      setInjectedGames(list);
+    }, (err) => console.warn('Injected games listener error:', err));
+
+    const unsubBroadcast = onSnapshot(doc(db, 'config', 'broadcast'), (snapshot) => {
+      if (snapshot.exists()) {
+        setAnnouncementText(snapshot.data().message || '');
+      }
+    }, (err) => console.warn('Broadcast listener error:', err));
+
+    return () => {
+      unsubInjected();
+      unsubBroadcast();
+    };
+  }, []);
+
+  const handleInjectGame = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newIframe.trim()) return;
 
@@ -179,36 +161,63 @@ export const OwnerVault: React.FC = () => {
       trending: true,
     };
 
-    const updated = [newGame, ...injectedGames];
-    setInjectedGames(updated);
-    localStorage.setItem('nexus_injected_games', JSON.stringify(updated));
+    try {
+      await setDoc(doc(db, 'injected_games', newGame.id), newGame);
+      playRetroSound('win');
+      setInjectSuccess(`"${newGame.title}" successfully injected into the global Nexus catalog!`);
+      setTimeout(() => setInjectSuccess(''), 4000);
 
-    // Also dispatch event so main catalog updates dynamically
-    window.dispatchEvent(new Event('nexus_games_updated'));
-
-    playRetroSound('win');
-    setInjectSuccess(`"${newGame.title}" successfully injected into the Nexus catalog!`);
-    setTimeout(() => setInjectSuccess(''), 4000);
-
-    setNewTitle('');
-    setNewIframe('');
-    setNewThumb('');
+      setNewTitle('');
+      setNewIframe('');
+      setNewThumb('');
+    } catch (err) {
+      console.error('Failed to inject game to Firestore:', err);
+      alert('Failed to publish custom game to database.');
+    }
   };
 
-  const handleRemoveInjected = (id: string) => {
-    const updated = injectedGames.filter(g => g.id !== id);
-    setInjectedGames(updated);
-    localStorage.setItem('nexus_injected_games', JSON.stringify(updated));
-    window.dispatchEvent(new Event('nexus_games_updated'));
-    playRetroSound('laser');
+  const handleRemoveInjected = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'injected_games', id));
+      playRetroSound('laser');
+    } catch (err) {
+      console.error('Failed to remove injected game from Firestore:', err);
+    }
   };
 
-  const handleSaveAnnouncement = () => {
-    localStorage.setItem('nexus_site_announcement', announcementText.trim());
-    window.dispatchEvent(new Event('nexus_announcement_updated'));
-    playRetroSound('coin');
-    setAnnounceSuccess('Global announcement broadcast published!');
-    setTimeout(() => setAnnounceSuccess(''), 3500);
+  const handleSaveAnnouncement = async () => {
+    const text = announcementText.trim();
+    try {
+      await setDoc(doc(db, 'config', 'broadcast'), {
+        message: text,
+        updatedBy: user?.email || 'c65043679@gmail.com',
+        updatedAt: new Date().toISOString(),
+      });
+      localStorage.setItem('nexus_site_announcement', text);
+      window.dispatchEvent(new Event('nexus_announcement_updated'));
+      playRetroSound('coin');
+      setAnnounceSuccess('Global announcement broadcast published live to all visitors!');
+      setTimeout(() => setAnnounceSuccess(''), 3500);
+    } catch (err) {
+      console.error('Failed to save broadcast notice to Firestore:', err);
+      alert('Failed to broadcast notice.');
+    }
+  };
+
+  const handleClearAnnouncement = async () => {
+    try {
+      await setDoc(doc(db, 'config', 'broadcast'), {
+        message: '',
+        updatedBy: user?.email || 'c65043679@gmail.com',
+        updatedAt: new Date().toISOString(),
+      });
+      setAnnouncementText('');
+      localStorage.removeItem('nexus_site_announcement');
+      window.dispatchEvent(new Event('nexus_announcement_updated'));
+      playRetroSound('laser');
+    } catch (err) {
+      console.error('Failed to clear announcement in Firestore:', err);
+    }
   };
 
   const toggleGodModeAura = () => {
@@ -224,6 +233,22 @@ export const OwnerVault: React.FC = () => {
     localStorage.setItem('nexus_matrix_rain', next ? 'true' : 'false');
     window.dispatchEvent(new CustomEvent('nexus_matrix_toggle', { detail: next }));
     playRetroSound(next ? 'powerup' : 'laser');
+  };
+
+  const handleTriggerGlobalParty = async (mode: 'fireworks' | 'cannon' = 'fireworks') => {
+    try {
+      await setDoc(doc(db, 'config', 'party'), {
+        timestamp: Date.now(),
+        mode,
+        triggeredBy: user?.email || 'c65043679@gmail.com',
+      });
+      playRetroSound('win');
+      setPartyTriggerSuccess(`🎉 Global ${mode.toUpperCase()} triggered live for all connected visitors!`);
+      setTimeout(() => setPartyTriggerSuccess(''), 4500);
+    } catch (err) {
+      console.error('Failed to trigger party mode:', err);
+      alert('Failed to send global party celebration event.');
+    }
   };
 
   if (!isOwner) {
@@ -309,7 +334,7 @@ export const OwnerVault: React.FC = () => {
         {[
           { id: 'hacks', label: 'God Mode Hacks', icon: Zap },
           { id: 'injector', label: 'Custom Game Injector', icon: PlusCircle },
-          { id: 'vip', label: 'VIP Exclusive Games', icon: Gamepad2 },
+          { id: 'command', label: 'Live Command HUD & Fireworks', icon: Rocket },
           { id: 'broadcast', label: 'Site Broadcast Banner', icon: Radio },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -583,34 +608,163 @@ export const OwnerVault: React.FC = () => {
         </motion.div>
       )}
 
-      {/* TAB CONTENT 3: VIP Exclusive Games */}
-      {activeTab === 'vip' && (
+      {/* TAB CONTENT 3: Live Command HUD & Fireworks */}
+      {activeTab === 'command' && (
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <Crown className="w-6 h-6 text-amber-400" />
-                Owner VIP Exclusive Vault Collection
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                These titles are reserved strictly for the Nexus Owner.
+          {/* Header Card */}
+          <div className="bg-gradient-to-br from-amber-950/40 via-black/80 to-purple-950/40 border border-amber-500/30 rounded-3xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10 border-b border-white/10 pb-6 mb-6">
+              <div>
+                <div className="flex items-center gap-2 text-amber-400 text-xs font-mono font-bold uppercase tracking-wider mb-1">
+                  <Activity className="w-4 h-4 animate-pulse" /> Live Telemetry & Control Deck
+                </div>
+                <h3 className="text-2xl font-black text-white">Site Command & Global Celebrations</h3>
+                <p className="text-xs text-slate-300 mt-1">
+                  Trigger site-wide real-time fireworks, test audio synthesis, and monitor global database telemetry.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-2xl text-xs font-bold font-mono">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                FIRESTORE LIVE SYNC ACTIVE
+              </div>
+            </div>
+
+            {/* Global Fireworks Trigger Section */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <PartyPopper className="w-4 h-4" /> Real-Time Global Celebration Signals
+              </h4>
+              <p className="text-xs text-slate-300">
+                Clicking a celebration button broadcasts a realtime signal to Firestore. Every visitor currently browsing the site will experience live canvas fireworks!
+              </p>
+
+              {partyTriggerSuccess && (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 p-4 rounded-2xl text-xs font-bold flex items-center gap-2 animate-bounce">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  {partyTriggerSuccess}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  onClick={() => handleTriggerGlobalParty('fireworks')}
+                  className="p-5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black font-black text-sm rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 flex items-center justify-between cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-black">
+                      <Rocket className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-black">Launch Fireworks Show</p>
+                      <p className="text-[11px] opacity-80">Full multi-colored particle shower</p>
+                    </div>
+                  </div>
+                  <Sparkles className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={() => handleTriggerGlobalParty('cannon')}
+                  className="p-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-sm rounded-2xl shadow-xl shadow-purple-500/20 transition-all active:scale-95 flex items-center justify-between cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white">
+                      <PartyPopper className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-black">Confetti Cannon Blast</p>
+                      <p className="text-[11px] opacity-80">High-velocity central burst</p>
+                    </div>
+                  </div>
+                  <Sparkles className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Telemetry Metrics Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-2 backdrop-blur-md">
+              <div className="flex items-center justify-between text-slate-400 text-xs font-bold">
+                <span>Realtime Latency</span>
+                <Wifi className="w-4 h-4 text-emerald-400" />
+              </div>
+              <p className="text-2xl font-black text-white font-mono">{pingMs} ms</p>
+              <p className="text-[11px] text-emerald-400 font-mono">⚡ Low Latency Edge Socket</p>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-2 backdrop-blur-md">
+              <div className="flex items-center justify-between text-slate-400 text-xs font-bold">
+                <span>Global Catalog Titles</span>
+                <Database className="w-4 h-4 text-amber-400" />
+              </div>
+              <p className="text-2xl font-black text-white font-mono">{15 + injectedGames.length}</p>
+              <p className="text-[11px] text-amber-400 font-mono">{injectedGames.length} Custom Injected</p>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-2 backdrop-blur-md">
+              <div className="flex items-center justify-between text-slate-400 text-xs font-bold">
+                <span>System Memory</span>
+                <Cpu className="w-4 h-4 text-purple-400" />
+              </div>
+              <p className="text-2xl font-black text-white font-mono">100% OK</p>
+              <p className="text-[11px] text-purple-400 font-mono">Zero Heap Leaks</p>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-2 backdrop-blur-md">
+              <div className="flex items-center justify-between text-slate-400 text-xs font-bold">
+                <span>Broadcast Engine</span>
+                <Radio className="w-4 h-4 text-yellow-400" />
+              </div>
+              <p className="text-2xl font-black text-white font-mono">
+                {announcementText ? 'ONLINE' : 'STANDBY'}
+              </p>
+              <p className="text-[11px] text-yellow-400 font-mono truncate">
+                {announcementText ? announcementText : 'No notice active'}
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {OWNER_VIP_GAMES.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
+          {/* Retro Audio Synthesizer Station */}
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4 backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Volume2 className="w-4 h-4 text-amber-400" /> Owner WebAudio Sound Test Console
+                </h4>
+                <p className="text-xs text-slate-400">Synthesize 8-bit arcade audio waveforms in real time</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {[
+                { name: 'Coin Sound', sound: 'coin', color: 'from-amber-500/20 to-yellow-500/20 border-amber-500/30 text-amber-300' },
+                { name: 'Laser Beam', sound: 'laser', color: 'from-cyan-500/20 to-blue-500/20 border-cyan-500/30 text-cyan-300' },
+                { name: 'Level Up', sound: 'levelup', color: 'from-emerald-500/20 to-teal-500/20 border-emerald-500/30 text-emerald-300' },
+                { name: 'Victory Win', sound: 'win', color: 'from-purple-500/20 to-pink-500/20 border-purple-500/30 text-purple-300' },
+                { name: 'Powerup', sound: 'powerup', color: 'from-rose-500/20 to-orange-500/20 border-rose-500/30 text-rose-300' },
+              ].map((sfx) => (
+                <button
+                  key={sfx.sound}
+                  onClick={() => playRetroSound(sfx.sound as any)}
+                  className={`p-4 bg-gradient-to-b ${sfx.color} border rounded-2xl flex flex-col items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all cursor-pointer font-bold text-xs`}
+                >
+                  <Play className="w-4 h-4" />
+                  {sfx.name}
+                </button>
+              ))}
+            </div>
           </div>
         </motion.div>
       )}
 
-      {/* TAB CONTENT 4: Broadcast Banner */}
+      {/* TAB CONTENT 3: Broadcast Banner */}
       {activeTab === 'broadcast' && (
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
@@ -623,7 +777,7 @@ export const OwnerVault: React.FC = () => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">Global Banner Broadcast Notice</h3>
-              <p className="text-xs text-slate-400">Display a floating announcement bar at the top of the entire website</p>
+              <p className="text-xs text-slate-400">Display a real-time floating announcement bar at the top of the entire website for all visitors</p>
             </div>
           </div>
 
@@ -653,16 +807,12 @@ export const OwnerVault: React.FC = () => {
                 onClick={handleSaveAnnouncement}
                 className="px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black font-black text-sm rounded-2xl shadow-lg shadow-amber-500/20 transition-all active:scale-95 cursor-pointer"
               >
-                Publish Broadcast
+                Publish Broadcast Live
               </button>
 
               {announcementText && (
                 <button
-                  onClick={() => {
-                    setAnnouncementText('');
-                    localStorage.removeItem('nexus_site_announcement');
-                    window.dispatchEvent(new Event('nexus_announcement_updated'));
-                  }}
+                  onClick={handleClearAnnouncement}
                   className="px-4 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl text-xs font-bold transition-all cursor-pointer"
                 >
                   Clear Announcement

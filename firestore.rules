@@ -14,6 +14,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    function isSiteAdmin() {
+      return isSignedIn() && request.auth.token.email.lower() == 'c65043679@gmail.com';
+    }
+
     function isValidUserProfile(data) {
       return data.keys().hasAll(['uid', 'displayName', 'email', 'createdAt', 'favorites']) &&
              data.uid == request.auth.uid &&
@@ -40,6 +44,24 @@ service cloud.firestore {
       match /saves/{gameId} {
         allow read, write: if isOwner(uid);
       }
+    }
+
+    // Site Broadcast Configuration (Publicly Readable, Owner Writeable)
+    match /config/broadcast {
+      allow read: if true;
+      allow write: if isSiteAdmin();
+    }
+
+    // Site Party Celebration Trigger (Publicly Readable, Owner Writeable)
+    match /config/party {
+      allow read: if true;
+      allow write: if isSiteAdmin();
+    }
+
+    // Owner Injected Games (Publicly Readable, Owner Writeable)
+    match /injected_games/{gameId} {
+      allow read: if true;
+      allow write: if isSiteAdmin();
     }
   }
 }

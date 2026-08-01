@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Radio, X } from 'lucide-react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export const BroadcastBanner: React.FC = () => {
   const [announcement, setAnnouncement] = useState(() => {
@@ -8,13 +10,36 @@ export const BroadcastBanner: React.FC = () => {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | null = null;
+    try {
+      unsubscribe = onSnapshot(doc(db, 'config', 'broadcast'), (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          const msg = data.message || '';
+          setAnnouncement(msg);
+          if (msg) setDismissed(false);
+          localStorage.setItem('nexus_site_announcement', msg);
+        } else {
+          setAnnouncement('');
+          localStorage.removeItem('nexus_site_announcement');
+        }
+      }, (error) => {
+        console.warn('Broadcast listener offline or restricted, falling back to local storage:', error);
+      });
+    } catch (err) {
+      console.error('Failed to initialize broadcast listener:', err);
+    }
+
     const handleUpdate = () => {
       setAnnouncement(localStorage.getItem('nexus_site_announcement') || '');
       setDismissed(false);
     };
 
     window.addEventListener('nexus_announcement_updated', handleUpdate);
-    return () => window.removeEventListener('nexus_announcement_updated', handleUpdate);
+    return () => {
+      if (unsubscribe) unsubscribe();
+      window.removeEventListener('nexus_announcement_updated', handleUpdate);
+    };
   }, []);
 
   if (!announcement || dismissed) return null;

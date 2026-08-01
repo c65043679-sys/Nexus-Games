@@ -14,6 +14,7 @@ import { FpsCounter } from './components/FpsCounter';
 import { PanicOverlay } from './components/PanicOverlay';
 import { BroadcastBanner } from './components/BroadcastBanner';
 import { MatrixRainCanvas } from './components/MatrixRainCanvas';
+import { GlobalPartyListener } from './components/GlobalPartyListener';
 
 function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,8 +31,9 @@ function AppContent() {
   return (
     <Router>
       <div className="relative min-h-screen bg-bg-dark text-slate-50 font-sans selection:bg-accent selection:text-white overflow-x-hidden">
-        {/* Matrix Rain Canvas */}
+        {/* Matrix Rain Canvas & Global Party Effect Listener */}
         <MatrixRainCanvas />
+        <GlobalPartyListener />
 
         {/* Mesh Gradients */}
         {settings.enableMeshGradient && (
