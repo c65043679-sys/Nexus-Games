@@ -19,7 +19,7 @@ import {
 import { useAuth } from '../components/AuthContext';
 import { useAchievements } from '../components/AchievementsContext';
 import { db } from '../lib/firebase';
-import { collection, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { validateNickname, checkNicknameUniqueness, containsProfanity } from '../utils/profanityFilter';
 
 export interface LeaderboardPlayer {
@@ -60,12 +60,14 @@ export const Leaderboard: React.FC = () => {
     setNicknameInput(currentName);
   }, [profile]);
 
-  const fetchLeaderboard = async () => {
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
     setLoading(true);
+
     try {
-      const firestoreList: LeaderboardPlayer[] = [];
-      try {
-        const snap = await getDocs(collection(db, 'users'));
+      unsub = onSnapshot(collection(db, 'users'), (snap) => {
+        const firestoreList: LeaderboardPlayer[] = [];
+
         snap.forEach(docSnap => {
           const data = docSnap.data();
           const playerEmail = (data.email || '').toLowerCase();
@@ -85,12 +87,13 @@ export const Leaderboard: React.FC = () => {
           const pTot = typeof data.totalScore === 'number' ? data.totalScore : (pXp + pGp);
 
           let playerDisplayName = data.nickname || data.displayName || 'Nexus Explorer';
-          
+
           // Auto-sanitize bad word names
           if (containsProfanity(playerDisplayName)) {
             playerDisplayName = 'Nexus Explorer';
             // Auto-reset in Firestore database
             setDoc(doc(db, 'users', playerUid), {
+              uid: playerUid,
               nickname: 'Nexus Explorer',
               displayName: 'Nexus Explorer',
               updatedAt: new Date().toISOString()
@@ -112,60 +115,61 @@ export const Leaderboard: React.FC = () => {
             isCurrentUser: user?.uid === playerUid
           });
         });
-      } catch (e) {
-        console.warn('Firestore users query offline or restricted:', e);
-      }
 
-      const realMap = new Map<string, LeaderboardPlayer>();
-      firestoreList.forEach(p => realMap.set(p.uid, p));
+        const realMap = new Map<string, LeaderboardPlayer>();
+        firestoreList.forEach(p => realMap.set(p.uid, p));
 
-      // Inject Current Non-Owner User dynamically if active
-      const isCurrentOwner = isOwner || user?.email?.toLowerCase() === 'c65043679@gmail.com';
+        // Inject Current Non-Owner User dynamically if active
+        const isCurrentOwner = isOwner || user?.email?.toLowerCase() === 'c65043679@gmail.com';
 
-      if (!isCurrentOwner) {
-        const currentUid = user?.uid || 'current_active_user';
-        let currentName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'You (Nexus Gamer)';
-        
-        if (containsProfanity(currentName)) {
-          currentName = 'Nexus Explorer';
-          localStorage.setItem('username', 'Nexus Explorer');
+        if (!isCurrentOwner) {
+          const currentUid = user?.uid || 'current_active_user';
+          let currentName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'You (Nexus Gamer)';
+
+          if (containsProfanity(currentName)) {
+            currentName = 'Nexus Explorer';
+            localStorage.setItem('username', 'Nexus Explorer');
+          }
+
+          const unlockedCount = Object.keys(unlocked).length;
+
+          realMap.set(currentUid, {
+            uid: currentUid,
+            displayName: currentName,
+            email: user?.email,
+            photoURL: user?.photoURL || localStorage.getItem('userpic'),
+            totalScore: totalScore,
+            gamePoints: gamePoints,
+            achievementXp: totalXp,
+            gamesPlayed: gamesPlayed,
+            achievementsCount: unlockedCount,
+            title: levelTitle,
+            avatarBg: 'bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600',
+            isCurrentUser: true
+          });
         }
 
-        const unlockedCount = Object.keys(unlocked).length;
-
-        realMap.set(currentUid, {
-          uid: currentUid,
-          displayName: currentName,
-          email: user?.email,
-          photoURL: user?.photoURL || localStorage.getItem('userpic'),
-          totalScore: totalScore,
-          gamePoints: gamePoints,
-          achievementXp: totalXp,
-          gamesPlayed: gamesPlayed,
-          achievementsCount: unlockedCount,
-          title: levelTitle,
-          avatarBg: 'bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600',
-          isCurrentUser: true
+        // Convert map to array and strictly filter out owner
+        let realPlayersOnly = Array.from(realMap.values()).filter(p => {
+          if (p.email?.toLowerCase() === 'c65043679@gmail.com') return false;
+          if (p.isOwner) return false;
+          return true;
         });
-      }
 
-      // Convert map to array and strictly filter out owner
-      let realPlayersOnly = Array.from(realMap.values()).filter(p => {
-        if (p.email?.toLowerCase() === 'c65043679@gmail.com') return false;
-        if (p.isOwner) return false;
-        return true;
+        setPlayers(realPlayersOnly);
+        setLoading(false);
+      }, (err) => {
+        console.warn('Firestore users query offline or restricted:', err);
+        setLoading(false);
       });
-
-      setPlayers(realPlayersOnly);
-    } catch (err) {
-      console.error('Error constructing leaderboard:', err);
-    } finally {
+    } catch (e) {
+      console.warn('Firestore users listener error:', e);
       setLoading(false);
     }
-  };
 
-  useEffect(() => {
-    fetchLeaderboard();
+    return () => {
+      if (unsub) unsub();
+    };
   }, [user, profile, isOwner, totalScore, totalXp, gamePoints, gamesPlayed, unlocked, levelTitle]);
 
   // Handle Nickname Update with Profanity Validation
@@ -198,6 +202,7 @@ export const Leaderboard: React.FC = () => {
       // 2. Save to Firestore profile if authenticated
       if (user) {
         await updateProfile({
+          uid: user.uid,
           nickname: cleanNickname,
           displayName: cleanNickname
         });
@@ -206,6 +211,7 @@ export const Leaderboard: React.FC = () => {
         try {
           const userRef = doc(db, 'users', user.uid);
           await setDoc(userRef, {
+            uid: user.uid,
             nickname: cleanNickname,
             displayName: cleanNickname,
             updatedAt: new Date().toISOString()
@@ -217,9 +223,6 @@ export const Leaderboard: React.FC = () => {
 
       setNicknameSuccess('Leaderboard nickname updated successfully!');
       setEditMode(false);
-
-      // Re-fetch leaderboard to reflect change instantly
-      await fetchLeaderboard();
 
       setTimeout(() => setNicknameSuccess(''), 4000);
     } catch (err: any) {

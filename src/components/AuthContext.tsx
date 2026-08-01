@@ -190,8 +190,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
+    const chosenName = data.nickname || data.displayName || profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'Nexus Explorer';
+
     await setDoc(userRef, {
+      uid: user.uid,
       ...data,
+      nickname: chosenName,
+      displayName: chosenName,
       updatedAt: serverTimestamp()
     }, { merge: true });
   };
