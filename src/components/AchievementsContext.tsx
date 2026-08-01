@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { useAuth } from './AuthContext';
 import { useSettings } from './SettingsContext';
@@ -292,10 +292,12 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   });
 
   const [activeToast, setActiveToast] = useState<ToastNotification | null>(null);
+  const isRemoteLoaded = useRef<boolean>(false);
 
   // Sync with Firestore if logged in; clear state when logged out
   useEffect(() => {
     if (!user) {
+      isRemoteLoaded.current = false;
       setUnlocked({});
       setProgressData({});
       setGamePoints(0);
@@ -311,6 +313,8 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return;
     }
 
+    isRemoteLoaded.current = false;
+
     try {
       const unsub = onSnapshot(doc(db, 'users', user.uid, 'data', 'achievements'), (snap) => {
         if (snap.exists()) {
@@ -325,16 +329,25 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
           setGamePoints(0);
           setGamesPlayed(0);
         }
-      }, (err) => console.warn('Achievements sync offline', err));
-      return () => unsub();
+        isRemoteLoaded.current = true;
+      }, (err) => {
+        console.warn('Achievements sync offline', err);
+        isRemoteLoaded.current = true;
+      });
+
+      return () => {
+        unsub();
+        isRemoteLoaded.current = false;
+      };
     } catch (e) {
       console.error(e);
+      isRemoteLoaded.current = true;
     }
   }, [user]);
 
   // Persist locally for active user
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isRemoteLoaded.current) return;
 
     try {
       localStorage.setItem('nexus_achievements', JSON.stringify(unlocked));
