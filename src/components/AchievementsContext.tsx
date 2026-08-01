@@ -252,7 +252,7 @@ const LEVEL_TITLES = [
 const AchievementsContext = createContext<AchievementsContextType | undefined>(undefined);
 
 export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { settings } = useSettings();
 
   const [unlocked, setUnlocked] = useState<Record<string, UnlockedAchievementData>>(() => {
@@ -375,7 +375,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         updatedAt: new Date().toISOString()
       }, { merge: true }).catch(() => {});
 
-      const activeName = localStorage.getItem('username') || user.displayName || 'Nexus Explorer';
+      const activeName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || user.displayName || 'Nexus Explorer';
 
       setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
@@ -392,7 +392,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         updatedAt: new Date().toISOString()
       }, { merge: true }).catch(() => {});
     }
-  }, [unlocked, progressData, gamePoints, gamesPlayed, user]);
+  }, [unlocked, progressData, gamePoints, gamesPlayed, user, profile]);
 
   // Calculate XP and Level
   const totalXp = Object.keys(unlocked).reduce((acc, id) => {

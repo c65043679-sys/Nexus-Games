@@ -75,6 +75,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (containsProfanity(activeNickname)) {
             activeNickname = 'Nexus Explorer';
             localStorage.removeItem('username');
+          } else {
+            localStorage.setItem('username', activeNickname);
           }
           const newProfile = {
             uid: user.uid,
@@ -88,12 +90,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           await setDoc(userRef, newProfile);
         } else {
-          // Migration & sync for existing users
+          // Migration & sync for existing users: prioritize saved Firestore nickname/displayName
           const data = userDoc.data();
-          let activeNickname = localStorage.getItem('username') || data?.nickname || data?.displayName || user.displayName;
+          let activeNickname = data?.nickname || data?.displayName || localStorage.getItem('username') || user.displayName || 'Nexus Explorer';
           if (activeNickname && containsProfanity(activeNickname)) {
             activeNickname = 'Nexus Explorer';
             localStorage.removeItem('username');
+          } else {
+            localStorage.setItem('username', activeNickname);
           }
           const updates: any = {};
           if (!data?.favorites) updates.favorites = [];
