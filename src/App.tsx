@@ -10,6 +10,8 @@ import { OwnerVault } from './pages/OwnerVault';
 import { Category } from './types';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import { SettingsProvider, useSettings } from './components/SettingsContext';
+import { AchievementsProvider } from './components/AchievementsContext';
+import { Achievements } from './pages/Achievements';
 import { FpsCounter } from './components/FpsCounter';
 import { PanicOverlay } from './components/PanicOverlay';
 import { BroadcastBanner } from './components/BroadcastBanner';
@@ -65,6 +67,7 @@ function AppContent() {
                   } 
                 />
                 <Route path="/play/:id" element={<Play />} />
+                <Route path="/achievements" element={<Achievements />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/updates" element={<Updates />} />
                 <Route path="/owner-vault" element={<OwnerVault />} />
@@ -90,7 +93,9 @@ export default function App() {
   return (
     <AuthProvider>
       <SettingsProvider>
-        <AppContent />
+        <AchievementsProvider>
+          <AppContent />
+        </AchievementsProvider>
       </SettingsProvider>
     </AuthProvider>
   );

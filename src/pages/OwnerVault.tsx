@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
 import { useSettings } from '../components/SettingsContext';
+import { useAchievements } from '../components/AchievementsContext';
 import { Game } from '../types';
 import { doc, setDoc, deleteDoc, collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -91,6 +92,13 @@ const playRetroSound = (type: 'coin' | 'laser' | 'levelup' | 'win' | 'powerup') 
 export const OwnerVault: React.FC = () => {
   const { isOwner, user, signIn } = useAuth();
   const { settings, updateSetting } = useSettings();
+  const { unlockAchievement, unlockAllAchievements } = useAchievements();
+
+  useEffect(() => {
+    if (isOwner) {
+      try { unlockAchievement('vault_visitor'); } catch (e) {}
+    }
+  }, [isOwner]);
 
   const [activeTab, setActiveTab] = useState<'hacks' | 'injector' | 'command' | 'broadcast'>('hacks');
 
@@ -450,6 +458,30 @@ export const OwnerVault: React.FC = () => {
                   }`} />
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Achievement Master Override Card */}
+          <div className="bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15 border border-amber-500/30 rounded-3xl p-6 backdrop-blur-xl md:col-span-2 space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-400 text-black flex items-center justify-center font-bold shrink-0 shadow-md shadow-amber-400/30">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Achievement & XP Master Override</h3>
+                  <p className="text-xs text-amber-200/80">Instantly grant 100% complete achievement trophies and max level XP to your owner profile</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  unlockAllAchievements();
+                  playRetroSound('win');
+                }}
+                className="px-6 py-3 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/25 transition-all active:scale-95 cursor-pointer flex items-center gap-2 whitespace-nowrap"
+              >
+                <Sparkles className="w-4 h-4" /> Unlock All Achievements
+              </button>
             </div>
           </div>
         </motion.div>

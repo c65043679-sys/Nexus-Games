@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
-import { useSettings, TAB_CLOAK_PRESETS } from '../components/SettingsContext';
+import { useSettings, TAB_CLOAK_PRESETS, CANVAS_THEMES } from '../components/SettingsContext';
+import { useAchievements } from '../components/AchievementsContext';
 import { 
   User as UserIcon, 
   Save, 
@@ -15,7 +16,12 @@ import {
   Maximize2,
   Volume2,
   Activity,
-  RotateCcw
+  RotateCcw,
+  Type,
+  Sparkles,
+  Layers,
+  Circle,
+  Eye
 } from 'lucide-react';
 
 const ACCENT_HUES = [
@@ -26,13 +32,19 @@ const ACCENT_HUES = [
   { name: 'Ruby Blaze', value: '#ef4444' },
   { name: 'Orchid Pink', value: '#ec4899' },
   { name: 'Deep Ocean', value: '#3b82f6' },
-  { name: 'Obsidian Monochrome', value: '#64748b' },
+  { name: 'Cyber Lime', value: '#84cc16' },
+  { name: 'Hyper Fuchsia', value: '#d946ef' },
 ];
 
 export const Settings: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
-  const { settings, updateSetting, updateSettings, resetSettings, triggerPanic } = useSettings();
-  
+  const { settings, updateSetting, updateSettings, resetSettings, triggerPanic: rawTriggerPanic } = useSettings();
+  const { unlockAchievement } = useAchievements();
+
+  const triggerPanic = () => {
+    try { unlockAchievement('panic_agent'); } catch (e) {}
+    rawTriggerPanic();
+  };
   const [nickname, setNickname] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -171,8 +183,18 @@ export const Settings: React.FC = () => {
                   </label>
                   <select
                     value={settings.tabCloak}
-                    onChange={(e) => updateSetting('tabCloak', e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+                    onChange={(e) => {
+                      updateSetting('tabCloak', e.target.value);
+                      if (e.target.value !== 'none') {
+                        try { 
+                          unlockAchievement('cloaking_expert');
+                          if (settings.panicKey) {
+                            unlockAchievement('secret_agent');
+                          }
+                        } catch (err) {}
+                      }
+                    }}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all cursor-pointer"
                   >
                     {TAB_CLOAK_PRESETS.map((preset) => (
                       <option key={preset.id} value={preset.id}>
@@ -210,65 +232,110 @@ export const Settings: React.FC = () => {
             </div>
           </section>
 
-          {/* SECTION 2: Visual Themes & Color Customization */}
+          {/* SECTION 2: Visual Themes & Background Atmosphere */}
           <section className="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6 backdrop-blur-xl">
             <div className="flex items-center gap-3 border-b border-white/10 pb-4">
               <div className="w-10 h-10 rounded-2xl bg-[var(--accent)]/15 border border-[var(--accent)]/30 flex items-center justify-center text-[var(--accent)]">
                 <Palette className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Visual Themes & Color Palette</h2>
-                <p className="text-xs text-slate-400">Personalize global accent colors and interface highlights</p>
+                <h2 className="text-lg font-bold text-white">Visual Themes & Atmosphere</h2>
+                <p className="text-xs text-slate-400">Personalize global accent colors and background canvas styles</p>
               </div>
             </div>
 
-            <div className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">
-                  Accent Color Preset
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {ACCENT_HUES.map((hue) => {
-                    const isSelected = settings.themeColor === hue.value;
-                    return (
-                      <button
-                        key={hue.value}
-                        onClick={() => updateSetting('themeColor', hue.value)}
-                        className={`flex items-center gap-2.5 p-3 rounded-2xl border transition-all text-left ${
-                          isSelected 
-                            ? 'bg-white/10 border-white text-white shadow-lg shadow-black/40 scale-[1.02]' 
-                            : 'bg-black/30 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
-                        }`}
-                      >
-                        <div 
-                          className="w-5 h-5 rounded-full border border-white/20 shrink-0" 
-                          style={{ backgroundColor: hue.value }}
-                        />
-                        <span className="text-xs font-bold truncate">{hue.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Accent Color Selection */}
+            <div className="space-y-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Accent Color Preset
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                {ACCENT_HUES.map((hue) => {
+                  const isSelected = settings.themeColor === hue.value;
+                  return (
+                    <button
+                      key={hue.value}
+                      onClick={() => {
+                        updateSetting('themeColor', hue.value);
+                        try { unlockAchievement('aesthetic_master'); } catch (e) {}
+                      }}
+                      className={`flex items-center gap-2.5 p-3 rounded-2xl border transition-all text-left cursor-pointer ${
+                        isSelected 
+                          ? 'bg-white/10 border-white text-white shadow-lg shadow-black/40 scale-[1.02]' 
+                          : 'bg-black/30 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <div 
+                        className="w-5 h-5 rounded-full border border-white/20 shrink-0" 
+                        style={{ backgroundColor: hue.value }}
+                      />
+                      <span className="text-xs font-bold truncate">{hue.name}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="flex items-center gap-4 pt-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                  Custom Color Hex:
+                  Custom Hex Color:
                 </label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={settings.themeColor}
-                    onChange={(e) => updateSetting('themeColor', e.value || e.target.value)}
+                    onChange={(e) => {
+                      updateSetting('themeColor', e.target.value);
+                      try { unlockAchievement('aesthetic_master'); } catch (e) {}
+                    }}
                     className="w-9 h-9 rounded-xl border border-white/20 bg-transparent cursor-pointer"
                   />
                   <input
                     type="text"
                     value={settings.themeColor}
-                    onChange={(e) => updateSetting('themeColor', e.target.value)}
+                    onChange={(e) => {
+                      updateSetting('themeColor', e.target.value);
+                      try { unlockAchievement('aesthetic_master'); } catch (e) {}
+                    }}
                     className="w-28 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono text-white"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Canvas Atmosphere Theme */}
+            <div className="space-y-4 pt-4 border-t border-white/10">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Background Atmosphere Canvas
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {CANVAS_THEMES.map((theme) => {
+                  const isSelected = settings.canvasTheme === theme.id;
+                  return (
+                    <button
+                      key={theme.id}
+                      onClick={() => {
+                        updateSetting('canvasTheme', theme.id);
+                        try { 
+                          unlockAchievement('aesthetic_master');
+                          if (theme.id === 'matrix') {
+                            unlockAchievement('matrix_surfer');
+                          }
+                        } catch (e) {}
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer space-y-2 ${
+                        isSelected
+                          ? 'bg-white/10 border-white text-white shadow-xl shadow-black/40'
+                          : 'bg-black/30 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">{theme.name}</span>
+                        {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-tight">{theme.description}</p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -295,8 +362,14 @@ export const Settings: React.FC = () => {
                   <p className="text-xs text-slate-400">Display real-time FPS and system memory stats in top-right corner</p>
                 </div>
                 <button
-                  onClick={() => updateSetting('showFpsCounter', !settings.showFpsCounter)}
-                  className={`w-12 h-6 rounded-full relative transition-colors ${
+                  onClick={() => {
+                    const nextVal = !settings.showFpsCounter;
+                    updateSetting('showFpsCounter', nextVal);
+                    if (nextVal) {
+                      try { unlockAchievement('fps_enthusiast'); } catch (e) {}
+                    }
+                  }}
+                  className={`w-12 h-6 rounded-full relative transition-colors cursor-pointer ${
                     settings.showFpsCounter ? 'bg-[var(--accent)]' : 'bg-slate-800'
                   }`}
                 >
@@ -372,7 +445,10 @@ export const Settings: React.FC = () => {
                   <p className="text-xs text-slate-400">Play subtle audio clicks on buttons and triggers</p>
                 </div>
                 <button
-                  onClick={() => updateSetting('uiSoundEffects', !settings.uiSoundEffects)}
+                  onClick={() => {
+                    updateSetting('uiSoundEffects', !settings.uiSoundEffects);
+                    try { unlockAchievement('sound_maestro'); } catch (e) {}
+                  }}
                   className={`w-12 h-6 rounded-full relative transition-colors ${
                     settings.uiSoundEffects ? 'bg-[var(--accent)]' : 'bg-slate-800'
                   }`}

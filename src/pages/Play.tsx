@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Info, Gamepad2, Maximize2, Minimize2, Save, CheckCircle2, Heart, Zap, Moon, ZoomIn, Crown } from 'lucide-react';
+import { ChevronLeft, Info, Gamepad2, Maximize2, Minimize2, Save, CheckCircle2, Heart, Zap, Moon, ZoomIn, Crown, ShieldAlert } from 'lucide-react';
 import { getAllGames } from '../utils/getAllGames';
 import { useAuth } from '../components/AuthContext';
 import { useSettings } from '../components/SettingsContext';
+import { useAchievements } from '../components/AchievementsContext';
 import { db } from '../lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { GameCard } from '../components/GameCard';
@@ -11,10 +12,12 @@ import { GameCard } from '../components/GameCard';
 export const Play: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user, profile, toggleFavorite, isOwner } = useAuth();
-  const { settings, updateSetting } = useSettings();
+  const { settings, updateSetting, triggerPanic } = useSettings();
+  const { unlockAchievement, incrementProgress } = useAchievements();
   const allGames = getAllGames();
   const game = allGames.find((g) => g.id === id);
   const godModeAura = localStorage.getItem('nexus_godmode_aura') === 'true';
+
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -24,8 +27,28 @@ export const Play: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   useEffect(() => {
+    if (game) {
+      try {
+        unlockAchievement('first_blood');
+        incrementProgress('veteran_gamer', 1);
+        incrementProgress('custom_game_tester', 1);
+        const hour = new Date().getHours();
+        if (hour >= 22 || hour < 5) {
+          unlockAchievement('night_owl');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [id, game]);
+
+  useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const active = !!document.fullscreenElement;
+      setIsFullscreen(active);
+      if (active) {
+        try { unlockAchievement('fullscreen_pro'); } catch (e) {}
+      }
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => {
@@ -316,7 +339,22 @@ export const Play: React.FC = () => {
               );
             })()}
             
-            {/* Fullscreen Overlay Button */}
+            {/* Fullscreen Overlay Controls */}
+            {isFullscreen && (
+              <button
+                onClick={() => {
+                  if (document.fullscreenElement) {
+                    try { document.exitFullscreen().catch(() => {}); } catch (e) {}
+                  }
+                  triggerPanic();
+                }}
+                className="absolute top-6 right-6 px-4 py-2.5 rounded-2xl bg-red-600/90 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider shadow-2xl shadow-red-600/40 backdrop-blur-md border border-red-400/40 opacity-0 group-hover/player:opacity-100 transition-all duration-300 z-50 flex items-center gap-2 cursor-pointer active:scale-95"
+                title="Emergency Panic Redirect"
+              >
+                <ShieldAlert className="w-4 h-4 text-white animate-pulse" /> Emergency Panic
+              </button>
+            )}
+
             <button 
               onClick={toggleFullscreen}
               className="absolute bottom-6 right-6 p-3 rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:bg-black/80 opacity-0 group-hover/player:opacity-100 transition-all duration-300 transform translate-y-2 group-hover/player:translate-y-0 shadow-lg"

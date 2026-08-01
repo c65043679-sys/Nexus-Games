@@ -44,6 +44,10 @@ service cloud.firestore {
       match /saves/{gameId} {
         allow read, write: if isOwner(uid);
       }
+
+      match /data/achievements {
+        allow read, write: if isOwner(uid);
+      }
     }
 
     // Site Broadcast Configuration (Publicly Readable, Owner Writeable)

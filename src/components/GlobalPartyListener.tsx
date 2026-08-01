@@ -2,8 +2,11 @@ import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { useAchievements } from './AchievementsContext';
 
 export const GlobalPartyListener: React.FC = () => {
+  const { unlockAchievement } = useAchievements();
+
   useEffect(() => {
     let lastSeenTs = 0;
 
@@ -44,6 +47,7 @@ export const GlobalPartyListener: React.FC = () => {
             // Trigger effect if received within last 30 seconds
             if (Date.now() - ts < 30000) {
               firePartyEffects(data.mode);
+              try { unlockAchievement('party_starter'); } catch (e) {}
             }
           }
         }

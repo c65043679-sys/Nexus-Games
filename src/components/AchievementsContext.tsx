@@ -1,0 +1,440 @@
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import confetti from 'canvas-confetti';
+import { useAuth } from './AuthContext';
+import { useSettings } from './SettingsContext';
+import { soundManager } from '../utils/soundEffects';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { Trophy, Star, Sparkles, Zap, Crown, ShieldAlert, Palette, Eye, Radio, Flame, Lock, Unlock, CheckCircle2, Rocket } from 'lucide-react';
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  xp: number;
+  iconName: string;
+  category: 'Explorer' | 'Customizer' | 'Gamer' | 'Secret' | 'Community';
+  tier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+  secret?: boolean;
+  maxProgress?: number;
+}
+
+export const ACHIEVEMENTS_CATALOG: Achievement[] = [
+  {
+    id: 'first_blood',
+    title: 'First Blood',
+    description: 'Launch and play your first game on Nexus Games.',
+    xp: 100,
+    iconName: 'Rocket',
+    category: 'Gamer',
+    tier: 'Bronze',
+  },
+  {
+    id: 'favorite_collector',
+    title: 'Game Curator',
+    description: 'Save at least 3 games to your Favorites list.',
+    xp: 150,
+    iconName: 'Star',
+    category: 'Gamer',
+    tier: 'Silver',
+    maxProgress: 3,
+  },
+  {
+    id: 'hoarder_supreme',
+    title: 'Vault Collector',
+    description: 'Add 5 or more titles to your Favorites collection.',
+    xp: 200,
+    iconName: 'Bookmark',
+    category: 'Gamer',
+    tier: 'Gold',
+    maxProgress: 5,
+  },
+  {
+    id: 'veteran_gamer',
+    title: 'Game Marathoner',
+    description: 'Launch and play at least 5 different games in Nexus.',
+    xp: 250,
+    iconName: 'Gamepad2',
+    category: 'Gamer',
+    tier: 'Gold',
+    maxProgress: 5,
+  },
+  {
+    id: 'genre_explorer',
+    title: 'Genre Explorer',
+    description: 'Explore games across 4 different categories.',
+    xp: 200,
+    iconName: 'Flame',
+    category: 'Gamer',
+    tier: 'Gold',
+    maxProgress: 4,
+  },
+  {
+    id: 'night_owl',
+    title: 'Midnight Gamer',
+    description: 'Play games late at night (after 10 PM or before 5 AM).',
+    xp: 200,
+    iconName: 'Eye',
+    category: 'Gamer',
+    tier: 'Gold',
+  },
+  {
+    id: 'aesthetic_master',
+    title: 'Aesthetic Overhaul',
+    description: 'Customize your theme accent color or background atmosphere canvas.',
+    xp: 150,
+    iconName: 'Palette',
+    category: 'Customizer',
+    tier: 'Silver',
+  },
+  {
+    id: 'sound_maestro',
+    title: 'Sound Maestro',
+    description: 'Toggle UI audio sound effects on or off in settings.',
+    xp: 100,
+    iconName: 'Zap',
+    category: 'Customizer',
+    tier: 'Bronze',
+  },
+  {
+    id: 'panic_agent',
+    title: 'Tactical Retreat',
+    description: 'Trigger Panic Mode for a stealth emergency redirect.',
+    xp: 100,
+    iconName: 'ShieldAlert',
+    category: 'Explorer',
+    tier: 'Bronze',
+  },
+  {
+    id: 'cloaking_expert',
+    title: 'Incognito Agent',
+    description: 'Enable custom tab cloaking to disguise your browser tab.',
+    xp: 150,
+    iconName: 'Lock',
+    category: 'Customizer',
+    tier: 'Silver',
+  },
+  {
+    id: 'fps_enthusiast',
+    title: 'Telemetry Specialist',
+    description: 'Enable the Live FPS & Performance overlay in settings.',
+    xp: 100,
+    iconName: 'Zap',
+    category: 'Customizer',
+    tier: 'Bronze',
+  },
+  {
+    id: 'search_master',
+    title: 'Search Recon',
+    description: 'Use the search bar to find games in the catalog.',
+    xp: 100,
+    iconName: 'Search',
+    category: 'Explorer',
+    tier: 'Bronze',
+  },
+  {
+    id: 'fullscreen_pro',
+    title: 'Max Immersion',
+    description: 'Enter Fullscreen Mode while playing any game.',
+    xp: 150,
+    iconName: 'Maximize',
+    category: 'Gamer',
+    tier: 'Silver',
+  },
+  {
+    id: 'updates_scholar',
+    title: 'Patch Notes Scholar',
+    description: 'Read the official Updates & Release Notes page.',
+    xp: 100,
+    iconName: 'FileText',
+    category: 'Explorer',
+    tier: 'Bronze',
+  },
+  {
+    id: 'party_starter',
+    title: 'Party Animal',
+    description: 'Trigger or experience a site-wide live fireworks celebration.',
+    xp: 200,
+    iconName: 'Sparkles',
+    category: 'Explorer',
+    tier: 'Gold',
+  },
+  {
+    id: 'custom_game_tester',
+    title: 'Community Game Tester',
+    description: 'Play any custom injected game or launch 3 games in the catalog.',
+    xp: 200,
+    iconName: 'Radio',
+    category: 'Community',
+    tier: 'Silver',
+    maxProgress: 3,
+  },
+  {
+    id: 'vault_visitor',
+    title: 'Platform Insider',
+    description: 'Visit the Nexus Achievements dashboard to view your profile statistics.',
+    xp: 250,
+    iconName: 'Crown',
+    category: 'Explorer',
+    tier: 'Platinum',
+  },
+  {
+    id: 'easter_egg_king',
+    title: 'Secret Overlord',
+    description: 'Tap the Nexus header logo 5 times in rapid succession!',
+    xp: 300,
+    iconName: 'Trophy',
+    category: 'Secret',
+    tier: 'Platinum',
+    secret: true,
+  },
+  {
+    id: 'secret_agent',
+    title: 'Shadow Stealth',
+    description: 'Enable both Panic Mode and Tab Cloaking for ultimate stealth.',
+    xp: 250,
+    iconName: 'ShieldCheck',
+    category: 'Secret',
+    tier: 'Platinum',
+    secret: true,
+  },
+  {
+    id: 'matrix_surfer',
+    title: 'Matrix Resident',
+    description: 'Switch background atmosphere canvas to Matrix Emerald.',
+    xp: 200,
+    iconName: 'Sparkles',
+    category: 'Secret',
+    tier: 'Gold',
+    secret: true,
+  }
+];
+
+export interface UnlockedAchievementData {
+  unlockedAt: number;
+  progress?: number;
+}
+
+interface ToastNotification {
+  id: string;
+  achievement: Achievement;
+}
+
+interface AchievementsContextType {
+  unlocked: Record<string, UnlockedAchievementData>;
+  progressData: Record<string, number>;
+  totalXp: number;
+  level: number;
+  levelTitle: string;
+  unlockAchievement: (id: string) => void;
+  unlockAllAchievements: () => void;
+  incrementProgress: (id: string, amount?: number) => void;
+  isUnlocked: (id: string) => boolean;
+  getProgress: (id: string) => number;
+}
+
+const LEVEL_TITLES = [
+  'Novice Gamer',
+  'Nexus Initiate',
+  'Cyber Explorer',
+  'Arcade Specialist',
+  'Matrix Operative',
+  'Overlord Vanguard',
+  'Nexus Legend',
+];
+
+const AchievementsContext = createContext<AchievementsContextType | undefined>(undefined);
+
+export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const { settings } = useSettings();
+
+  const [unlocked, setUnlocked] = useState<Record<string, UnlockedAchievementData>>(() => {
+    try {
+      const saved = localStorage.getItem('nexus_achievements');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const [progressData, setProgressData] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('nexus_achievements_progress');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const [activeToast, setActiveToast] = useState<ToastNotification | null>(null);
+
+  // Sync with Firestore if logged in
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const unsub = onSnapshot(doc(db, 'users', user.uid, 'data', 'achievements'), (snap) => {
+        if (snap.exists()) {
+          const remoteData = snap.data();
+          if (remoteData.unlocked) {
+            setUnlocked(prev => ({ ...prev, ...remoteData.unlocked }));
+          }
+          if (remoteData.progress) {
+            setProgressData(prev => ({ ...prev, ...remoteData.progress }));
+          }
+        }
+      }, (err) => console.warn('Achievements sync offline', err));
+      return () => unsub();
+    } catch (e) {
+      console.error(e);
+    }
+  }, [user]);
+
+  // Persist locally
+  useEffect(() => {
+    try {
+      localStorage.setItem('nexus_achievements', JSON.stringify(unlocked));
+      localStorage.setItem('nexus_achievements_progress', JSON.stringify(progressData));
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (user) {
+      setDoc(doc(db, 'users', user.uid, 'data', 'achievements'), {
+        unlocked,
+        progress: progressData,
+        updatedAt: new Date().toISOString()
+      }, { merge: true }).catch(() => {});
+    }
+  }, [unlocked, progressData, user]);
+
+  // Calculate XP and Level
+  const totalXp = Object.keys(unlocked).reduce((acc, id) => {
+    const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
+    return acc + (ach ? ach.xp : 0);
+  }, 0);
+
+  const level = Math.floor(totalXp / 250) + 1;
+  const levelTitle = LEVEL_TITLES[Math.min(level - 1, LEVEL_TITLES.length - 1)];
+
+  const triggerToast = useCallback((ach: Achievement) => {
+    setActiveToast({ id: Date.now().toString(), achievement: ach });
+    soundManager.playLevelUp(settings.uiSoundEffects);
+
+    // Confetti burst
+    try {
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.1, x: 0.9 },
+        zIndex: 99999
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
+    setTimeout(() => {
+      setActiveToast(null);
+    }, 5000);
+  }, [settings.uiSoundEffects]);
+
+  const unlockAchievement = useCallback((id: string) => {
+    if (unlocked[id]) return; // already unlocked
+
+    const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
+    if (!ach) return;
+
+    const updated = {
+      ...unlocked,
+      [id]: { unlockedAt: Date.now() }
+    };
+    setUnlocked(updated);
+    triggerToast(ach);
+  }, [unlocked, triggerToast]);
+
+  const unlockAllAchievements = useCallback(() => {
+    const allUnlocked: Record<string, UnlockedAchievementData> = {};
+    ACHIEVEMENTS_CATALOG.forEach(ach => {
+      allUnlocked[ach.id] = { unlockedAt: Date.now() };
+    });
+    setUnlocked(allUnlocked);
+    soundManager.playLevelUp(settings.uiSoundEffects);
+    try {
+      confetti({
+        particleCount: 180,
+        spread: 100,
+        origin: { y: 0.3 },
+        zIndex: 99999
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }, [settings.uiSoundEffects]);
+
+  const incrementProgress = useCallback((id: string, amount: number = 1) => {
+    if (unlocked[id]) return;
+
+    const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
+    if (!ach || !ach.maxProgress) {
+      unlockAchievement(id);
+      return;
+    }
+
+    const current = (progressData[id] || 0) + amount;
+    const updatedProgress = { ...progressData, [id]: current };
+    setProgressData(updatedProgress);
+
+    if (current >= ach.maxProgress) {
+      unlockAchievement(id);
+    }
+  }, [unlocked, progressData, unlockAchievement]);
+
+  const isUnlocked = useCallback((id: string) => !!unlocked[id], [unlocked]);
+  const getProgress = useCallback((id: string) => progressData[id] || 0, [progressData]);
+
+  return (
+    <AchievementsContext.Provider value={{
+      unlocked,
+      progressData,
+      totalXp,
+      level,
+      levelTitle,
+      unlockAchievement,
+      unlockAllAchievements,
+      incrementProgress,
+      isUnlocked,
+      getProgress
+    }}>
+      {children}
+
+      {/* Floating Achievement Unlock Banner Toast */}
+      {activeToast && (
+        <div className="fixed top-20 right-6 z-[100000] animate-bounce max-w-sm">
+          <div className="bg-slate-900/95 border-2 border-amber-400 p-4 rounded-2xl shadow-2xl shadow-amber-500/30 backdrop-blur-2xl flex items-center gap-4 text-white">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center text-black font-black shrink-0 shadow-lg shadow-amber-500/40">
+              <Trophy className="w-6 h-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 text-amber-400 text-[10px] font-mono font-bold uppercase tracking-widest">
+                <Sparkles className="w-3 h-3" /> Achievement Unlocked!
+              </div>
+              <h4 className="text-sm font-black text-white truncate">{activeToast.achievement.title}</h4>
+              <p className="text-xs text-slate-300 truncate">{activeToast.achievement.description}</p>
+              <span className="inline-block mt-1 text-[10px] font-bold text-amber-300 font-mono">
+                +{activeToast.achievement.xp} XP Earned
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </AchievementsContext.Provider>
+  );
+};
+
+export const useAchievements = () => {
+  const context = useContext(AchievementsContext);
+  if (!context) {
+    throw new Error('useAchievements must be used within an AchievementsProvider');
+  }
+  return context;
+};

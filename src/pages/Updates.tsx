@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Calendar, Tag, ShieldAlert, Sliders, Play, Image, Sparkles } from 'lucide-react';
+import { useAchievements } from '../components/AchievementsContext';
 
 interface UpdateItem {
   version: string;
@@ -161,6 +162,12 @@ const UPDATES: UpdateItem[] = [
 ];
 
 export const Updates: React.FC = () => {
+  const { unlockAchievement } = useAchievements();
+
+  useEffect(() => {
+    try { unlockAchievement('updates_scholar'); } catch (e) {}
+  }, []);
+
   const getBadgeStyle = (type: UpdateItem['type']) => {
     switch (type) {
       case 'addition':

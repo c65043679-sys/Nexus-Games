@@ -103,6 +103,40 @@ class SoundManager {
       // Ignore audio errors
     }
   }
+  playLevelUp(enabled: boolean = true) {
+    if (!enabled) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'triangle';
+      osc2.type = 'triangle';
+
+      osc1.frequency.setValueAtTime(440, now); // A4
+      osc1.frequency.setValueAtTime(554.37, now + 0.08); // C#5
+      osc2.frequency.setValueAtTime(659.25, now + 0.16); // E5
+      osc2.frequency.setValueAtTime(880, now + 0.24); // A5
+
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc1.stop(now + 0.24);
+      osc2.start(now + 0.16);
+      osc2.stop(now + 0.4);
+    } catch (e) {
+      // Ignore audio errors
+    }
+  }
 }
 
 export const soundManager = new SoundManager();

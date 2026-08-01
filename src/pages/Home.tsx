@@ -6,6 +6,7 @@ import { getAllGames } from '../utils/getAllGames';
 import { motion } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
 import { useSettings } from '../components/SettingsContext';
+import { useAchievements } from '../components/AchievementsContext';
 
 interface HomeProps {
   searchQuery: string;
@@ -15,7 +16,25 @@ interface HomeProps {
 export const Home: React.FC<HomeProps> = ({ searchQuery, activeCategory }) => {
   const { profile } = useAuth();
   const { settings } = useSettings();
+  const { incrementProgress, unlockAchievement } = useAchievements();
   const [allGamesList, setAllGamesList] = useState<Game[]>(() => getAllGames());
+
+  useEffect(() => {
+    if (profile?.favorites) {
+      if (profile.favorites.length >= 3) {
+        try { unlockAchievement('favorite_collector'); } catch (e) {}
+      }
+      if (profile.favorites.length >= 5) {
+        try { unlockAchievement('hoarder_supreme'); } catch (e) {}
+      }
+    }
+  }, [profile?.favorites]);
+
+  useEffect(() => {
+    if (activeCategory !== 'all' && activeCategory !== 'Favorites' && activeCategory !== 'Blocked' && activeCategory !== 'Unblocked') {
+      try { incrementProgress('genre_explorer', 1); } catch (e) {}
+    }
+  }, [activeCategory]);
 
   useEffect(() => {
     const handleGamesUpdate = () => {

@@ -1,8 +1,9 @@
-import React from 'react';
-import { Search, Heart, User as UserIcon, PlusCircle, ShieldAlert, Crown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Heart, User as UserIcon, PlusCircle, ShieldAlert, Crown, Trophy } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useSettings } from './SettingsContext';
+import { useAchievements } from './AchievementsContext';
 
 interface NavbarProps {
   onSearch: (query: string) => void;
@@ -11,19 +12,40 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
   const { user, profile, signIn, isOwner } = useAuth();
   const { triggerPanic } = useSettings();
+  const { unlocked, unlockAchievement } = useAchievements();
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [logoTapCount, setLogoTapCount] = useState(0);
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    const nextCount = logoTapCount + 1;
+    setLogoTapCount(nextCount);
+
+    if (nextCount >= 5) {
+      try { unlockAchievement('easter_egg_king'); } catch (err) {}
+      setLogoTapCount(0);
+    }
+
+    setTimeout(() => {
+      setLogoTapCount(0);
+    }, 3000);
+  };
+
+  const unlockedCount = Object.keys(unlocked).length;
+
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between h-[72px] px-8 bg-bg-dark/60 backdrop-blur-xl border-b border-white/10">
-      <Link to="/" className="flex items-center gap-3 group">
-        <div className="w-10 h-10 bg-[var(--accent)] text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-[var(--accent)]/30 group-hover:scale-105 transition-all">
-          N
-        </div>
-        <span className="text-xl font-bold tracking-tight">
-          NEXUS<span className="text-[var(--accent)] ml-0.5">GAMES</span>
-        </span>
-      </Link>
+      <div onClick={handleLogoClick} className="cursor-pointer">
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 bg-[var(--accent)] text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-[var(--accent)]/30 group-hover:scale-105 transition-all">
+            N
+          </div>
+          <span className="text-xl font-bold tracking-tight">
+            NEXUS<span className="text-[var(--accent)] ml-0.5">GAMES</span>
+          </span>
+        </Link>
+      </div>
 
       <div className="flex-1 max-w-md mx-8 lg:mx-12 relative">
         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -35,6 +57,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
           className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 text-sm transition-all text-white placeholder-slate-400"
           onChange={(e) => {
             onSearch(e.target.value);
+            if (e.target.value.trim().length >= 2) {
+              try { unlockAchievement('search_master'); } catch (err) {}
+            }
             if (location.pathname !== '/') {
               navigate('/');
             }
@@ -43,6 +68,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
       </div>
 
       <nav className="flex items-center gap-3 sm:gap-5">
+        <Link
+          to="/achievements"
+          title="View Achievements & XP Level"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-300 text-xs font-bold rounded-full transition-all active:scale-95 shadow-sm"
+        >
+          <Trophy className="w-4 h-4 text-amber-400" />
+          <span className="hidden md:inline">Achievements</span>
+          <span className="px-1.5 py-0.5 bg-amber-400/20 text-amber-300 text-[10px] font-mono rounded-full">
+            {unlockedCount}
+          </span>
+        </Link>
+
         {isOwner && (
           <Link
             to="/owner-vault"

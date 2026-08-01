@@ -23,17 +23,18 @@ export const THEME_PRESETS: ThemePreset[] = [
 export interface CanvasTheme {
   id: string;
   name: string;
+  description: string;
   bgDark: string;
   bgCard: string;
   accentSubtle: string;
 }
 
 export const CANVAS_THEMES: CanvasTheme[] = [
-  { id: 'default', name: 'Deep Space (Default)', bgDark: '#020617', bgCard: 'rgba(255, 255, 255, 0.05)', accentSubtle: 'rgba(2, 6, 23, 0.6)' },
-  { id: 'pitch-black', name: 'OLED Pure Black', bgDark: '#000000', bgCard: 'rgba(255, 255, 255, 0.04)', accentSubtle: 'rgba(10, 10, 10, 0.8)' },
-  { id: 'midnight-purple', name: 'Nebula Purple', bgDark: '#080414', bgCard: 'rgba(255, 255, 255, 0.05)', accentSubtle: 'rgba(16, 8, 36, 0.7)' },
-  { id: 'cyber-matrix', name: 'Matrix Emerald', bgDark: '#02120b', bgCard: 'rgba(255, 255, 255, 0.05)', accentSubtle: 'rgba(4, 28, 18, 0.7)' },
-  { id: 'charcoal-slate', name: 'Charcoal Slate', bgDark: '#0f172a', bgCard: 'rgba(255, 255, 255, 0.06)', accentSubtle: 'rgba(30, 41, 59, 0.7)' },
+  { id: 'default', name: 'Deep Space', description: 'Cosmic dark slate canvas with radial accent highlights', bgDark: '#020617', bgCard: 'rgba(255, 255, 255, 0.05)', accentSubtle: 'rgba(2, 6, 23, 0.6)' },
+  { id: 'pitch-black', name: 'OLED Pure Black', description: 'True #000000 background optimized for OLED contrast', bgDark: '#000000', bgCard: 'rgba(255, 255, 255, 0.04)', accentSubtle: 'rgba(10, 10, 10, 0.8)' },
+  { id: 'midnight-purple', name: 'Nebula Purple', description: 'Deep galactic indigo atmosphere with purple glow', bgDark: '#080414', bgCard: 'rgba(255, 255, 255, 0.05)', accentSubtle: 'rgba(16, 8, 36, 0.7)' },
+  { id: 'cyber-matrix', name: 'Matrix Emerald', description: 'Hacker terminal dark green canvas with ambient rain effect', bgDark: '#02120b', bgCard: 'rgba(255, 255, 255, 0.05)', accentSubtle: 'rgba(4, 28, 18, 0.7)' },
+  { id: 'charcoal-slate', name: 'Charcoal Slate', description: 'Subtle slate gray contrast palette for low eye strain', bgDark: '#0f172a', bgCard: 'rgba(255, 255, 255, 0.06)', accentSubtle: 'rgba(30, 41, 59, 0.7)' },
 ];
 
 export interface TabCloakPreset {
@@ -173,6 +174,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     root.style.setProperty('--accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
     root.style.setProperty('--accent-glow', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35)`);
 
+    // Reset default font and radius
+    document.body.style.fontFamily = '';
+
     // Canvas Theme
     const cTheme = CANVAS_THEMES.find(t => t.id === settings.canvasTheme) || CANVAS_THEMES[0];
     root.style.setProperty('--bg-dark', cTheme.bgDark);
@@ -228,6 +232,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [settings.tabCloak, settings.customTabTitle, settings.customTabFavicon]);
 
   const triggerPanic = useCallback(() => {
+    if (document.fullscreenElement) {
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      } catch (e) {
+        console.error('Error exiting fullscreen on panic:', e);
+      }
+    }
     let target = settings.panicUrl && settings.panicUrl.trim() ? settings.panicUrl.trim() : 'https://students.aloysius.vic.edu.au/#?page=/home';
     if (target.includes('classroom.google.com')) {
       target = 'https://students.aloysius.vic.edu.au/#?page=/home';
@@ -243,32 +256,60 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsPanicTriggered(false);
   }, []);
 
-  // Panic Key Event Listener
+  // Panic Key Event Listener with capture phase & iframe binding
   useEffect(() => {
+    const isPanicMatch = (e: KeyboardEvent) => {
+      const key = settings.panicKey;
+      if (!key) return false;
+      if (key === 'Backquote' && (e.code === 'Backquote' || e.key === '`' || e.key === '~')) return true;
+      if (key === 'Escape' && (e.code === 'Escape' || e.key === 'Escape')) return true;
+      if (key === 'AltP' && e.altKey && (e.code === 'KeyP' || e.key === 'p' || e.key === 'P')) return true;
+      if (key === 'AltZ' && e.altKey && (e.code === 'KeyZ' || e.key === 'z' || e.key === 'Z')) return true;
+      return false;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if typing in input/textarea unless it's a specific modifier key combo
       const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       const isTyping = targetTag === 'input' || targetTag === 'textarea';
 
-      if (settings.panicKey === 'Backquote' && e.code === 'Backquote') {
-        if (!isTyping) {
+      if (isPanicMatch(e)) {
+        if (!isTyping || settings.panicKey === 'AltP' || settings.panicKey === 'AltZ' || settings.panicKey === 'Escape') {
           e.preventDefault();
+          e.stopPropagation();
           triggerPanic();
         }
-      } else if (settings.panicKey === 'Escape' && e.code === 'Escape') {
-        e.preventDefault();
-        triggerPanic();
-      } else if (settings.panicKey === 'AltP' && e.altKey && (e.code === 'KeyP' || e.key === 'p')) {
-        e.preventDefault();
-        triggerPanic();
-      } else if (settings.panicKey === 'AltZ' && e.altKey && (e.code === 'KeyZ' || e.key === 'z')) {
-        e.preventDefault();
-        triggerPanic();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    document.addEventListener('keydown', handleKeyDown, true);
+
+    const attachToIframes = () => {
+      try {
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach(iframe => {
+          try {
+            if (iframe.contentWindow) {
+              iframe.contentWindow.removeEventListener('keydown', handleKeyDown, true);
+              iframe.contentWindow.addEventListener('keydown', handleKeyDown, true);
+            }
+          } catch (err) {
+            // Cross-origin restriction
+          }
+        });
+      } catch (err) {
+        // Selector error catch
+      }
+    };
+
+    attachToIframes();
+    const interval = setInterval(attachToIframes, 800);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('keydown', handleKeyDown, true);
+      clearInterval(interval);
+    };
   }, [settings.panicKey, triggerPanic]);
 
   const updateSetting = <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => {
