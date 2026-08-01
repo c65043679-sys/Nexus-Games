@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from './components/AuthContext';
 import { SettingsProvider, useSettings } from './components/SettingsContext';
 import { AchievementsProvider } from './components/AchievementsContext';
 import { Achievements } from './pages/Achievements';
+import { Leaderboard } from './pages/Leaderboard';
 import { FpsCounter } from './components/FpsCounter';
 import { PanicOverlay } from './components/PanicOverlay';
 import { BroadcastBanner } from './components/BroadcastBanner';
@@ -68,6 +69,7 @@ function AppContent() {
                 />
                 <Route path="/play/:id" element={<Play />} />
                 <Route path="/achievements" element={<Achievements />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/updates" element={<Updates />} />
                 <Route path="/owner-vault" element={<OwnerVault />} />

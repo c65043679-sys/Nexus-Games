@@ -13,7 +13,7 @@ export const Play: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user, profile, toggleFavorite, isOwner } = useAuth();
   const { settings, updateSetting, triggerPanic } = useSettings();
-  const { unlockAchievement, incrementProgress } = useAchievements();
+  const { unlockAchievement, incrementProgress, recordGamePlay, addGameTimePoints } = useAchievements();
   const allGames = getAllGames();
   const game = allGames.find((g) => g.id === id);
   const godModeAura = localStorage.getItem('nexus_godmode_aura') === 'true';
@@ -27,8 +27,9 @@ export const Play: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   useEffect(() => {
-    if (game) {
+    if (game && id) {
       try {
+        recordGamePlay(id);
         unlockAchievement('first_blood');
         incrementProgress('veteran_gamer', 1);
         incrementProgress('custom_game_tester', 1);
@@ -40,7 +41,16 @@ export const Play: React.FC = () => {
         console.error(e);
       }
     }
-  }, [id, game]);
+
+    // Active playtime reward timer: +10 pts every 60 seconds of playing
+    const playTimer = setInterval(() => {
+      try {
+        addGameTimePoints(10);
+      } catch (e) {}
+    }, 60000);
+
+    return () => clearInterval(playTimer);
+  }, [id, game, recordGamePlay, addGameTimePoints, unlockAchievement, incrementProgress]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -55,6 +65,36 @@ export const Play: React.FC = () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+
+    const handleFullscreenKeyDown = (e: KeyboardEvent) => {
+      const key = settings.panicKey;
+      let isMatch = false;
+      if (key === 'Backquote' && (e.code === 'Backquote' || e.key === '`' || e.key === '~')) isMatch = true;
+      if (key === 'Escape' && (e.code === 'Escape' || e.key === 'Escape')) isMatch = true;
+      if (key === 'AltP' && e.altKey && (e.code === 'KeyP' || e.key === 'p' || e.key === 'P')) isMatch = true;
+      if (key === 'AltZ' && e.altKey && (e.code === 'KeyZ' || e.key === 'z' || e.key === 'Z')) isMatch = true;
+
+      if (isMatch) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (document.fullscreenElement) {
+          try { document.exitFullscreen().catch(() => {}); } catch (err) {}
+        }
+        triggerPanic();
+      }
+    };
+
+    window.addEventListener('keydown', handleFullscreenKeyDown, true);
+    document.addEventListener('keydown', handleFullscreenKeyDown, true);
+
+    return () => {
+      window.removeEventListener('keydown', handleFullscreenKeyDown, true);
+      document.removeEventListener('keydown', handleFullscreenKeyDown, true);
+    };
+  }, [isFullscreen, settings.panicKey, triggerPanic]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -341,27 +381,56 @@ export const Play: React.FC = () => {
             
             {/* Fullscreen Overlay Controls */}
             {isFullscreen && (
-              <button
-                onClick={() => {
-                  if (document.fullscreenElement) {
-                    try { document.exitFullscreen().catch(() => {}); } catch (e) {}
-                  }
-                  triggerPanic();
+              <div 
+                className="absolute top-4 right-4 z-50 flex items-center gap-2.5 opacity-0 group-hover/player:opacity-100 transition-all duration-300 pointer-events-auto"
+                onMouseEnter={() => {
+                  try { window.focus(); } catch (e) {}
                 }}
-                className="absolute top-6 right-6 px-4 py-2.5 rounded-2xl bg-red-600/90 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider shadow-2xl shadow-red-600/40 backdrop-blur-md border border-red-400/40 opacity-0 group-hover/player:opacity-100 transition-all duration-300 z-50 flex items-center gap-2 cursor-pointer active:scale-95"
-                title="Emergency Panic Redirect"
               >
-                <ShieldAlert className="w-4 h-4 text-white animate-pulse" /> Emergency Panic
-              </button>
+                <button
+                  onClick={() => {
+                    if (document.fullscreenElement) {
+                      try { document.exitFullscreen().catch(() => {}); } catch (e) {}
+                    }
+                    triggerPanic();
+                  }}
+                  className="px-3.5 py-2 rounded-full bg-slate-900/90 hover:bg-red-950/90 border border-white/10 hover:border-red-500/40 text-slate-200 hover:text-red-200 text-xs font-medium backdrop-blur-xl shadow-2xl transition-all duration-200 flex items-center gap-2 cursor-pointer active:scale-95 group/panic"
+                  title="Emergency Panic Redirect"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5 text-red-400 group-hover/panic:text-red-300 transition-colors" />
+                  <span>Panic Redirect</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-mono text-slate-400 group-hover/panic:text-red-200 font-bold uppercase">
+                    {(() => {
+                      switch (settings.panicKey) {
+                        case 'Backquote': return '`';
+                        case 'Escape': return 'Esc';
+                        case 'AltP': return 'Alt+P';
+                        case 'AltZ': return 'Alt+Z';
+                        default: return 'Alt+P';
+                      }
+                    })()}
+                  </span>
+                </button>
+
+                <button 
+                  onClick={toggleFullscreen}
+                  className="p-2 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white text-xs font-medium backdrop-blur-xl shadow-2xl transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95"
+                  title="Exit Fullscreen"
+                >
+                  <Minimize2 className="w-4 h-4" />
+                </button>
+              </div>
             )}
 
-            <button 
-              onClick={toggleFullscreen}
-              className="absolute bottom-6 right-6 p-3 rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:bg-black/80 opacity-0 group-hover/player:opacity-100 transition-all duration-300 transform translate-y-2 group-hover/player:translate-y-0 shadow-lg"
-              title={isFullscreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
-            >
-              {isFullscreen ? <Minimize2 className="w-6 h-6" /> : <Maximize2 className="w-6 h-6" />}
-            </button>
+            {!isFullscreen && (
+              <button 
+                onClick={toggleFullscreen}
+                className="absolute bottom-6 right-6 p-3 rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:bg-black/80 opacity-0 group-hover/player:opacity-100 transition-all duration-300 transform translate-y-2 group-hover/player:translate-y-0 shadow-lg"
+                title="Toggle Fullscreen"
+              >
+                <Maximize2 className="w-6 h-6" />
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">

@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
 import { useSettings, TAB_CLOAK_PRESETS, CANVAS_THEMES } from '../components/SettingsContext';
 import { useAchievements } from '../components/AchievementsContext';
+import { validateNickname } from '../utils/profanityFilter';
 import { 
   User as UserIcon, 
   Save, 
@@ -57,12 +58,22 @@ export const Settings: React.FC = () => {
 
   const handleSaveProfile = async () => {
     if (!user) return;
+
+    const validation = validateNickname(nickname);
+    if (!validation.isValid) {
+      setMessage(`Error: ${validation.error}`);
+      setTimeout(() => setMessage(''), 5000);
+      return;
+    }
+
     setIsSaving(true);
     try {
       await updateProfile({
-        nickname,
+        nickname: nickname.trim(),
+        displayName: nickname.trim(),
         themeColor: settings.themeColor,
       });
+      localStorage.setItem('username', nickname.trim());
       setMessage('Profile and preferences synced successfully!');
       setTimeout(() => setMessage(''), 3500);
     } catch (err: any) {

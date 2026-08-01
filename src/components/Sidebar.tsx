@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, Skull, Trophy, Star, Settings, Lock, Unlock, History, PlusCircle, Crown } from 'lucide-react';
+import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, Skull, Trophy, Star, Settings, Lock, Unlock, History, PlusCircle, Crown, BarChart3, Medal } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Category } from '../types';
 import { useAuth } from './AuthContext';
@@ -70,6 +70,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
         </Link>
         
         <div className="space-y-2 mt-4">
+          <Link 
+            to="/leaderboard"
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+              location.pathname === '/leaderboard'
+                ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
+                : 'text-slate-400 border border-transparent hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Medal className="w-5 h-5 text-amber-400" />
+            <span className="text-sm font-medium">Leaderboard</span>
+          </Link>
+
           <Link 
             to="/achievements"
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${

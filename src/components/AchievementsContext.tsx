@@ -224,6 +224,9 @@ interface AchievementsContextType {
   unlocked: Record<string, UnlockedAchievementData>;
   progressData: Record<string, number>;
   totalXp: number;
+  gamePoints: number;
+  gamesPlayed: number;
+  totalScore: number;
   level: number;
   levelTitle: string;
   unlockAchievement: (id: string) => void;
@@ -231,6 +234,8 @@ interface AchievementsContextType {
   incrementProgress: (id: string, amount?: number) => void;
   isUnlocked: (id: string) => boolean;
   getProgress: (id: string) => number;
+  recordGamePlay: (gameId: string) => void;
+  addGameTimePoints: (amount: number) => void;
 }
 
 const LEVEL_TITLES = [
@@ -267,6 +272,24 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   });
 
+  const [gamePoints, setGamePoints] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('nexus_game_points');
+      return saved ? parseInt(saved, 10) || 0 : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
+
+  const [gamesPlayed, setGamesPlayed] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('nexus_games_played');
+      return saved ? parseInt(saved, 10) || 0 : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
+
   const [activeToast, setActiveToast] = useState<ToastNotification | null>(null);
 
   // Sync with Firestore if logged in
@@ -282,6 +305,12 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
           if (remoteData.progress) {
             setProgressData(prev => ({ ...prev, ...remoteData.progress }));
           }
+          if (typeof remoteData.gamePoints === 'number') {
+            setGamePoints(remoteData.gamePoints);
+          }
+          if (typeof remoteData.gamesPlayed === 'number') {
+            setGamesPlayed(remoteData.gamesPlayed);
+          }
         }
       }, (err) => console.warn('Achievements sync offline', err));
       return () => unsub();
@@ -295,18 +324,38 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       localStorage.setItem('nexus_achievements', JSON.stringify(unlocked));
       localStorage.setItem('nexus_achievements_progress', JSON.stringify(progressData));
+      localStorage.setItem('nexus_game_points', gamePoints.toString());
+      localStorage.setItem('nexus_games_played', gamesPlayed.toString());
     } catch (e) {
       console.error(e);
     }
 
     if (user) {
+      const totalScoreVal = Object.keys(unlocked).reduce((acc, id) => {
+        const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
+        return acc + (ach ? ach.xp : 0);
+      }, 0) + gamePoints;
+
       setDoc(doc(db, 'users', user.uid, 'data', 'achievements'), {
         unlocked,
         progress: progressData,
+        gamePoints,
+        gamesPlayed,
+        updatedAt: new Date().toISOString()
+      }, { merge: true }).catch(() => {});
+
+      setDoc(doc(db, 'users', user.uid), {
+        displayName: user.displayName || 'Nexus Player',
+        email: user.email,
+        photoURL: user.photoURL,
+        totalScore: totalScoreVal,
+        gamePoints,
+        gamesPlayed,
+        achievementsCount: Object.keys(unlocked).length,
         updatedAt: new Date().toISOString()
       }, { merge: true }).catch(() => {});
     }
-  }, [unlocked, progressData, user]);
+  }, [unlocked, progressData, gamePoints, gamesPlayed, user]);
 
   // Calculate XP and Level
   const totalXp = Object.keys(unlocked).reduce((acc, id) => {
@@ -314,8 +363,19 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return acc + (ach ? ach.xp : 0);
   }, 0);
 
-  const level = Math.floor(totalXp / 250) + 1;
+  const totalScore = totalXp + gamePoints;
+
+  const level = Math.floor(totalScore / 250) + 1;
   const levelTitle = LEVEL_TITLES[Math.min(level - 1, LEVEL_TITLES.length - 1)];
+
+  const recordGamePlay = useCallback((_gameId: string) => {
+    setGamesPlayed(prev => prev + 1);
+    setGamePoints(prev => prev + 50); // +50 Points per game launched
+  }, []);
+
+  const addGameTimePoints = useCallback((amount: number = 10) => {
+    setGamePoints(prev => prev + amount); // +10 Points per minute active
+  }, []);
 
   const triggerToast = useCallback((ach: Achievement) => {
     setActiveToast({ id: Date.now().toString(), achievement: ach });
@@ -397,13 +457,18 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       unlocked,
       progressData,
       totalXp,
+      gamePoints,
+      gamesPlayed,
+      totalScore,
       level,
       levelTitle,
       unlockAchievement,
       unlockAllAchievements,
       incrementProgress,
       isUnlocked,
-      getProgress
+      getProgress,
+      recordGamePlay,
+      addGameTimePoints
     }}>
       {children}
 
