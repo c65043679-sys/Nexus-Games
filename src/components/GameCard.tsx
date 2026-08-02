@@ -12,6 +12,13 @@ interface GameCardProps {
 export const GameCard: React.FC<GameCardProps> = ({ game }) => {
   const { user, profile, toggleFavorite } = useAuth();
   const isFavorited = profile?.favorites?.includes(game.id);
+  const [godModeAura, setGodModeAura] = React.useState(() => localStorage.getItem('nexus_godmode_aura') === 'true');
+
+  React.useEffect(() => {
+    const handleToggle = (e: CustomEvent) => setGodModeAura(!!e.detail);
+    window.addEventListener('nexus_godmode_toggle' as any, handleToggle);
+    return () => window.removeEventListener('nexus_godmode_toggle' as any, handleToggle);
+  }, []);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -29,7 +36,9 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.03, y: -4 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-[var(--accent)]/50 transition-all shadow-lg hover:shadow-[var(--accent)]/10"
+      className={`group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-[var(--accent)]/50 transition-all shadow-lg hover:shadow-[var(--accent)]/10 ${
+        godModeAura ? 'ring-2 ring-amber-400/80 shadow-[0_0_20px_rgba(251,191,36,0.3)] border-amber-400/50' : ''
+      }`}
     >
       <button 
         onClick={handleFavoriteClick}

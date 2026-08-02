@@ -18,6 +18,7 @@ import { PanicOverlay } from './components/PanicOverlay';
 import { BroadcastBanner } from './components/BroadcastBanner';
 import { MatrixRainCanvas } from './components/MatrixRainCanvas';
 import { GlobalPartyListener } from './components/GlobalPartyListener';
+import { GlobalEffectsListener } from './components/GlobalEffectsListener';
 
 function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,9 +35,10 @@ function AppContent() {
   return (
     <Router>
       <div className="relative min-h-screen bg-bg-dark text-slate-50 font-sans selection:bg-accent selection:text-white overflow-x-hidden">
-        {/* Matrix Rain Canvas & Global Party Effect Listener */}
+        {/* Matrix Rain Canvas, Global Effects & Global Party Effect Listener */}
         <MatrixRainCanvas />
         <GlobalPartyListener />
+        <GlobalEffectsListener />
 
         {/* Mesh Gradients */}
         {settings.enableMeshGradient && (

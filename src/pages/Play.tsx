@@ -19,6 +19,9 @@ export const Play: React.FC = () => {
   const [godModeAura, setGodModeAura] = useState(() => localStorage.getItem('nexus_godmode_aura') === 'true');
 
   useEffect(() => {
+    const handleToggle = (e: CustomEvent) => setGodModeAura(!!e.detail);
+    window.addEventListener('nexus_godmode_toggle' as any, handleToggle);
+
     let unsub: (() => void) | null = null;
     try {
       unsub = onSnapshot(doc(db, 'config', 'effects'), (snapshot) => {
@@ -26,14 +29,15 @@ export const Play: React.FC = () => {
           const data = snapshot.data();
           if (typeof data.godModeAura === 'boolean') {
             setGodModeAura(data.godModeAura);
-            localStorage.setItem('nexus_godmode_aura', data.godModeAura ? 'true' : 'false');
           }
         }
       }, (err) => console.warn('Play page effects listener error:', err));
     } catch (e) {
       console.error('Play page effects listener setup error:', e);
     }
+
     return () => {
+      window.removeEventListener('nexus_godmode_toggle' as any, handleToggle);
       if (unsub) unsub();
     };
   }, []);
