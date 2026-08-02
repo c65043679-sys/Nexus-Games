@@ -40,7 +40,7 @@ const ACCENT_HUES = [
 ];
 
 export const Settings: React.FC = () => {
-  const { user, profile, updateProfile } = useAuth();
+  const { user, profile, isOwner, updateProfile } = useAuth();
   const { settings, updateSetting, updateSettings, resetSettings, triggerPanic: rawTriggerPanic } = useSettings();
   const { unlockAchievement, wipeAllProgress } = useAchievements();
 
@@ -51,6 +51,35 @@ export const Settings: React.FC = () => {
   const [message, setMessage] = useState('');
   const [showWipeModal, setShowWipeModal] = useState(false);
   const [isWipingProgress, setIsWipingProgress] = useState(false);
+
+  // Owner custom handle state
+  const [ownerHandleInput, setOwnerHandleInput] = useState('');
+  const [isSavingHandle, setIsSavingHandle] = useState(false);
+
+  useEffect(() => {
+    if (isOwner) {
+      setOwnerHandleInput(profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'Nexus Overlord');
+    }
+  }, [profile, isOwner]);
+
+  const handleSaveOwnerHandle = async () => {
+    if (!ownerHandleInput.trim()) return;
+    setIsSavingHandle(true);
+    try {
+      await updateProfile({
+        nickname: ownerHandleInput.trim(),
+        displayName: ownerHandleInput.trim()
+      });
+      setMessage('Owner Overlord handle updated successfully!');
+      setTimeout(() => setMessage(''), 3500);
+    } catch (err: any) {
+      console.error(err);
+      setMessage(`Error: ${err.message || 'Failed to update owner handle'}`);
+      setTimeout(() => setMessage(''), 4000);
+    } finally {
+      setIsSavingHandle(false);
+    }
+  };
 
   const handleWipeAllProgress = async () => {
     setIsWipingProgress(true);
@@ -472,16 +501,46 @@ export const Settings: React.FC = () => {
 
             {user ? (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-2">Assigned Gamer Tag</label>
-                  <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold text-amber-400 font-mono flex items-center justify-between shadow-inner">
-                    <span>{generateGamerTag(user.uid)}</span>
-                    <span className="text-[10px] text-slate-500 font-sans font-normal">Auto-Assigned</span>
+                {isOwner ? (
+                  <div>
+                    <label className="block text-xs font-bold text-amber-400 mb-2 flex items-center justify-between">
+                      <span>Owner Custom Alias</span>
+                      <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">Owner Privileged</span>
+                    </label>
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={ownerHandleInput}
+                        onChange={(e) => setOwnerHandleInput(e.target.value)}
+                        placeholder="Enter your custom owner alias..."
+                        maxLength={25}
+                        className="w-full bg-black/60 border border-amber-500/40 rounded-xl px-4 py-2.5 text-sm font-bold text-amber-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                      <button
+                        onClick={handleSaveOwnerHandle}
+                        disabled={isSavingHandle || !ownerHandleInput.trim()}
+                        className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+                      >
+                        <Save className={`w-3.5 h-3.5 ${isSavingHandle ? 'animate-spin' : ''}`} />
+                        {isSavingHandle ? 'Saving...' : 'Update Custom Owner Handle'}
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-amber-300/70 mt-1.5">
+                      Only site owners have custom handle override privileges.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-1.5">
-                    Community handle is deterministically assigned to keep rankings clean and fair.
-                  </p>
-                </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-2">Assigned Gamer Tag</label>
+                    <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold text-amber-400 font-mono flex items-center justify-between shadow-inner">
+                      <span>{generateGamerTag(user.uid)}</span>
+                      <span className="text-[10px] text-slate-500 font-sans font-normal">Auto-Assigned</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1.5">
+                      Community handles are deterministically assigned to keep rankings clean and fair.
+                    </p>
+                  </div>
+                )}
 
                 <div className="p-4 rounded-2xl bg-black/40 border border-white/5 text-xs space-y-2">
                   <div className="flex justify-between text-slate-400">
@@ -490,7 +549,9 @@ export const Settings: React.FC = () => {
                   </div>
                   <div className="flex justify-between text-slate-400">
                     <span>Status</span>
-                    <span className="text-emerald-400 font-bold">Active Member</span>
+                    <span className="text-emerald-400 font-bold flex items-center gap-1">
+                      {isOwner ? '👑 Overlord Owner' : 'Active Member'}
+                    </span>
                   </div>
                 </div>
               </div>

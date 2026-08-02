@@ -30,8 +30,8 @@ import {
   Rocket
 } from 'lucide-react';
 
-// Web Audio Synthesis Helper for Retro 8-bit Sounds
-const playRetroSound = (type: 'coin' | 'laser' | 'levelup' | 'win' | 'powerup') => {
+// Web Audio Synthesis Helper for Retro 8-bit Sounds & Realtime Waveforms
+const playRetroSound = (type: 'coin' | 'laser' | 'levelup' | 'win' | 'powerup' | 'overcharge' | 'plasma' | 'glitch' | 'bassdrop') => {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     const osc = ctx.createOscillator();
@@ -40,6 +40,9 @@ const playRetroSound = (type: 'coin' | 'laser' | 'levelup' | 'win' | 'powerup') 
     gain.connect(ctx.destination);
 
     const now = ctx.currentTime;
+
+    // Dispatch custom audio event for realtime spectrum canvas visualizer
+    window.dispatchEvent(new CustomEvent('nexus_audio_synth', { detail: { type } }));
 
     if (type === 'coin') {
       osc.type = 'sine';
@@ -83,14 +86,305 @@ const playRetroSound = (type: 'coin' | 'laser' | 'levelup' | 'win' | 'powerup') 
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
       osc.start(now);
       osc.stop(now + 0.25);
+    } else if (type === 'overcharge') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+      gain.gain.setValueAtTime(0.4, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+      osc.start(now);
+      osc.stop(now + 0.45);
+    } else if (type === 'plasma') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1500, now);
+      osc.frequency.linearRampToValueAtTime(300, now + 0.18);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now);
+      osc.stop(now + 0.2);
+    } else if (type === 'glitch') {
+      osc.type = 'sawtooth';
+      for (let i = 0; i < 6; i++) {
+        osc.frequency.setValueAtTime(200 + Math.random() * 1200, now + i * 0.03);
+      }
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now);
+      osc.stop(now + 0.2);
+    } else if (type === 'bassdrop') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(30, now + 0.6);
+      gain.gain.setValueAtTime(0.5, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.65);
+      osc.start(now);
+      osc.stop(now + 0.65);
     }
   } catch (e) {
     console.error('Audio synthesis failed:', e);
   }
 };
 
+// Canvas 1: Realtime Audio Spectrum Equalizer
+const AudioSpectrumVisualizer: React.FC = () => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    let energy = 0;
+
+    const handleAudioSynth = () => {
+      energy = 1.0;
+    };
+    window.addEventListener('nexus_audio_synth', handleAudioSynth);
+
+    const bars = Array.from({ length: 24 }, () => Math.random() * 0.2);
+
+    const render = () => {
+      canvas.width = canvas.parentElement?.clientWidth || 300;
+      canvas.height = 70;
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      energy = Math.max(0, energy - 0.02);
+
+      const barWidth = w / bars.length;
+
+      for (let i = 0; i < bars.length; i++) {
+        bars[i] = Math.max(0.1, bars[i] * 0.95 + (Math.random() * 0.2 + energy * 0.7) * 0.08);
+        const barHeight = bars[i] * h * 0.85;
+
+        const x = i * barWidth;
+        const y = h - barHeight;
+
+        const grad = ctx.createLinearGradient(0, h, 0, 0);
+        grad.addColorStop(0, '#f59e0b');
+        grad.addColorStop(0.5, '#7c3aed');
+        grad.addColorStop(1, '#06b6d4');
+
+        ctx.fillStyle = grad;
+        ctx.fillRect(x + 2, y, barWidth - 4, barHeight);
+      }
+
+      animId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('nexus_audio_synth', handleAudioSynth);
+    };
+  }, []);
+
+  return (
+    <div className="w-full bg-black/60 border border-white/10 rounded-2xl p-3 space-y-2">
+      <div className="flex items-center justify-between text-[11px] font-mono text-amber-400 font-bold">
+        <span>AUDIO SPECTRUM WAVEFORM</span>
+        <span className="flex items-center gap-1 text-emerald-400">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" /> REALTIME SYNTH
+        </span>
+      </div>
+      <canvas ref={canvasRef} className="w-full h-[70px] rounded-lg" />
+    </div>
+  );
+};
+
+// Canvas 2: Realtime 360 Degree Matrix Radar Sweep
+const RadarSweepCanvas: React.FC = () => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    let angle = 0;
+
+    const targets = [
+      { x: 0.35, y: 0.25, alpha: 1 },
+      { x: 0.7, y: 0.6, alpha: 1 },
+      { x: 0.2, y: 0.75, alpha: 1 },
+      { x: 0.8, y: 0.3, alpha: 1 },
+    ];
+
+    const render = () => {
+      canvas.width = canvas.parentElement?.clientWidth || 300;
+      canvas.height = 180;
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      const radius = Math.min(cx, cy) - 10;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Draw grid circles
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
+      ctx.lineWidth = 1;
+      for (let r = radius; r > 0; r -= radius / 3) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Draw crosshairs
+      ctx.beginPath();
+      ctx.moveTo(cx - radius, cy);
+      ctx.lineTo(cx + radius, cy);
+      ctx.moveTo(cx, cy - radius);
+      ctx.lineTo(cx, cy + radius);
+      ctx.stroke();
+
+      // Sweeping line
+      angle += 0.04;
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, radius, angle - 0.3, angle);
+      ctx.lineTo(0, 0);
+      const sweepGrad = ctx.createConicGradient(angle, 0, 0);
+      sweepGrad.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+      sweepGrad.addColorStop(0.1, 'rgba(16, 185, 129, 0.0)');
+      ctx.fillStyle = sweepGrad;
+      ctx.fill();
+
+      ctx.restore();
+
+      // Targets blips
+      targets.forEach((t) => {
+        const tx = cx + (t.x - 0.5) * radius * 1.8;
+        const ty = cy + (t.y - 0.5) * radius * 1.8;
+
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(tx, ty, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+        ctx.beginPath();
+        ctx.arc(tx, ty, 7, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+
+      animId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
+  return (
+    <div className="bg-black/60 border border-emerald-500/30 rounded-2xl p-4 space-y-2 relative overflow-hidden">
+      <div className="flex items-center justify-between text-xs font-mono font-bold text-emerald-400">
+        <span>360° SOCKET RADAR MATRIX</span>
+        <span>SCANNING EDGE NODES...</span>
+      </div>
+      <canvas ref={canvasRef} className="w-full h-[180px] rounded-xl" />
+    </div>
+  );
+};
+
+// Canvas 3: Realtime Plasma Shockwave Cannon
+const PlasmaCannonCanvas: React.FC = () => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  const firePlasmaShockwave = () => {
+    playRetroSound('plasma');
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    let particles: Array<{ x: number; y: number; vx: number; vy: number; radius: number; color: string; life: number }> = [];
+
+    const colors = ['#7c3aed', '#06b6d4', '#f59e0b', '#ef4444', '#10b981'];
+
+    for (let i = 0; i < 40; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 8 + 3;
+      particles.push({
+        x: w / 2,
+        y: h / 2,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: Math.random() * 4 + 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 1.0
+      });
+    }
+
+    let frame = 0;
+    const animateParticles = () => {
+      frame++;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.fillRect(0, 0, w, h);
+
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.03;
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      });
+
+      particles = particles.filter((p) => p.life > 0);
+
+      if (particles.length > 0 && frame < 40) {
+        requestAnimationFrame(animateParticles);
+      } else {
+        ctx.clearRect(0, 0, w, h);
+      }
+    };
+
+    animateParticles();
+  };
+
+  return (
+    <div className="bg-black/60 border border-purple-500/30 rounded-2xl p-4 space-y-3 relative overflow-hidden">
+      <div className="flex items-center justify-between text-xs font-mono font-bold text-purple-300">
+        <span>REAL-TIME PLASMA CANNON SHOCKWAVE</span>
+        <button
+          onClick={firePlasmaShockwave}
+          className="px-3 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-lg text-xs transition-all active:scale-95 cursor-pointer shadow-md shadow-purple-500/30"
+        >
+          ⚡ Fire Plasma Cannon
+        </button>
+      </div>
+      <canvas 
+        ref={canvasRef} 
+        onClick={firePlasmaShockwave}
+        className="w-full h-[120px] bg-slate-950/80 rounded-xl cursor-crosshair border border-white/5" 
+      />
+      <p className="text-[10px] text-slate-400 font-mono text-center">
+        Click canvas or button to fire realtime plasma particle blast
+      </p>
+    </div>
+  );
+};
+
 export const OwnerVault: React.FC = () => {
-  const { isOwner, user, signIn } = useAuth();
+  const { isOwner, user, signIn, updateProfile } = useAuth();
   const { settings, updateSetting } = useSettings();
   const { unlockAchievement, unlockAllAchievements } = useAchievements();
 
@@ -101,6 +395,29 @@ export const OwnerVault: React.FC = () => {
   }, [isOwner]);
 
   const [activeTab, setActiveTab] = useState<'hacks' | 'injector' | 'command' | 'broadcast'>('hacks');
+
+  // Owner handle editor state
+  const [ownerHandleInput, setOwnerHandleInput] = useState(user?.displayName || '');
+  const [handleSavedNotice, setHandleSavedNotice] = useState('');
+
+  // Sync handle input if user profile changes
+  useEffect(() => {
+    if (user?.displayName) {
+      setOwnerHandleInput(user.displayName);
+    }
+  }, [user?.displayName]);
+
+  const handleSaveOwnerHandle = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ownerHandleInput.trim()) return;
+    updateProfile({
+      nickname: ownerHandleInput.trim(),
+      displayName: ownerHandleInput.trim()
+    });
+    playRetroSound('levelup');
+    setHandleSavedNotice('Owner custom handle updated live!');
+    setTimeout(() => setHandleSavedNotice(''), 3000);
+  };
 
   // Party trigger & Telemetry state
   const [partyTriggerSuccess, setPartyTriggerSuccess] = useState('');
@@ -243,15 +560,15 @@ export const OwnerVault: React.FC = () => {
     playRetroSound(next ? 'powerup' : 'laser');
   };
 
-  const handleTriggerGlobalParty = async (mode: 'fireworks' | 'cannon' = 'fireworks') => {
+  const handleTriggerGlobalParty = async (mode: 'fireworks' | 'cannon' | 'neon_strobe' = 'fireworks') => {
     try {
       await setDoc(doc(db, 'config', 'party'), {
         timestamp: Date.now(),
         mode,
         triggeredBy: user?.email || 'c65043679@gmail.com',
       });
-      playRetroSound('win');
-      setPartyTriggerSuccess(`🎉 Global ${mode.toUpperCase()} triggered live for all connected visitors!`);
+      playRetroSound(mode === 'neon_strobe' ? 'overcharge' : 'win');
+      setPartyTriggerSuccess(`🎉 Global ${mode.toUpperCase().replace('_', ' ')} triggered live for all connected visitors!`);
       setTimeout(() => setPartyTriggerSuccess(''), 4500);
     } catch (err) {
       console.error('Failed to trigger party mode:', err);
@@ -311,7 +628,7 @@ export const OwnerVault: React.FC = () => {
           <Crown className="w-64 h-64 text-amber-400" />
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-black uppercase tracking-widest">
               <Crown className="w-3.5 h-3.5" />
@@ -323,9 +640,33 @@ export const OwnerVault: React.FC = () => {
             <p className="text-sm text-slate-300 max-w-xl">
               Welcome back, <span className="text-amber-400 font-bold">{user?.displayName || 'Site Owner'}</span> (<span className="font-mono text-xs">{user?.email || 'c65043679@gmail.com'}</span>). You have full override privileges across the entire Nexus Games platform.
             </p>
+
+            {/* Quick Owner Custom Handle Editor */}
+            <form onSubmit={handleSaveOwnerHandle} className="mt-4 flex items-center gap-2 max-w-md">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={ownerHandleInput}
+                  onChange={(e) => setOwnerHandleInput(e.target.value)}
+                  placeholder="Owner Custom Gamer Alias..."
+                  className="w-full bg-black/60 border border-amber-500/40 rounded-xl px-3.5 py-2 text-xs text-amber-300 font-bold focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder:text-amber-500/50"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+              >
+                Save Alias
+              </button>
+            </form>
+            {handleSavedNotice && (
+              <p className="text-[11px] text-emerald-400 font-bold flex items-center gap-1 mt-1 animate-fade-in">
+                <CheckCircle2 className="w-3.5 h-3.5" /> {handleSavedNotice}
+              </p>
+            )}
           </div>
 
-          <div className="flex items-center gap-3 bg-black/50 border border-white/10 p-4 rounded-2xl backdrop-blur-md">
+          <div className="flex items-center gap-3 bg-black/50 border border-white/10 p-4 rounded-2xl backdrop-blur-md shrink-0">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-black flex items-center justify-center font-black text-xl shadow-lg shadow-amber-500/20">
               👑
             </div>
@@ -390,20 +731,27 @@ export const OwnerVault: React.FC = () => {
               {[
                 { name: 'Coin Pickup', type: 'coin' as const, color: 'hover:border-yellow-400' },
                 { name: 'Laser Cannon', type: 'laser' as const, color: 'hover:border-red-400' },
-                { name: 'Level Up Fanfare', type: 'levelup' as const, color: 'hover:border-emerald-400' },
+                { name: 'Level Up', type: 'levelup' as const, color: 'hover:border-emerald-400' },
                 { name: 'Victory Tune', type: 'win' as const, color: 'hover:border-purple-400' },
-                { name: 'Power Up Surge', type: 'powerup' as const, color: 'hover:border-sky-400' },
+                { name: 'Power Up', type: 'powerup' as const, color: 'hover:border-sky-400' },
+                { name: 'Overcharge', type: 'overcharge' as const, color: 'hover:border-amber-400' },
+                { name: 'Plasma Blast', type: 'plasma' as const, color: 'hover:border-cyan-400' },
+                { name: 'Glitch Bit', type: 'glitch' as const, color: 'hover:border-pink-400' },
+                { name: 'Sub Bass Drop', type: 'bassdrop' as const, color: 'hover:border-indigo-400' },
               ].map((s) => (
                 <button
                   key={s.name}
                   onClick={() => playRetroSound(s.type)}
-                  className={`p-3.5 bg-black/40 border border-white/10 rounded-2xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/10 transition-all flex flex-col items-center gap-2 ${s.color} active:scale-95`}
+                  className={`p-3 bg-black/40 border border-white/10 rounded-2xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/10 transition-all flex flex-col items-center gap-1.5 ${s.color} active:scale-95 cursor-pointer`}
                 >
                   <Sparkles className="w-4 h-4 text-amber-400" />
                   <span>{s.name}</span>
                 </button>
               ))}
             </div>
+
+            {/* Realtime Waveform Equalizer Canvas */}
+            <AudioSpectrumVisualizer />
           </div>
 
           {/* Visual Hacks */}
@@ -684,7 +1032,7 @@ export const OwnerVault: React.FC = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button
                   onClick={() => handleTriggerGlobalParty('fireworks')}
                   className="p-5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black font-black text-sm rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 flex items-center justify-between cursor-pointer group"
@@ -694,8 +1042,8 @@ export const OwnerVault: React.FC = () => {
                       <Rocket className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-black">Launch Fireworks Show</p>
-                      <p className="text-[11px] opacity-80">Full multi-colored particle shower</p>
+                      <p className="text-sm font-black">Launch Fireworks</p>
+                      <p className="text-[11px] opacity-80">Full particle shower</p>
                     </div>
                   </div>
                   <Sparkles className="w-5 h-5" />
@@ -710,14 +1058,36 @@ export const OwnerVault: React.FC = () => {
                       <PartyPopper className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-black">Confetti Cannon Blast</p>
-                      <p className="text-[11px] opacity-80">High-velocity central burst</p>
+                      <p className="text-sm font-black">Confetti Blast</p>
+                      <p className="text-[11px] opacity-80">Central burst</p>
+                    </div>
+                  </div>
+                  <Sparkles className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={() => handleTriggerGlobalParty('neon_strobe')}
+                  className="p-5 bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-black font-black text-sm rounded-2xl shadow-xl shadow-cyan-500/20 transition-all active:scale-95 flex items-center justify-between cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-black">
+                      <Zap className="w-5 h-5 group-hover:animate-bounce" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-black">Neon Strobe Flash</p>
+                      <p className="text-[11px] opacity-80">Global viewport border glow</p>
                     </div>
                   </div>
                   <Sparkles className="w-5 h-5" />
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Real-time Visual Canvases Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <RadarSweepCanvas />
+            <PlasmaCannonCanvas />
           </div>
 
           {/* Telemetry Metrics Grid */}

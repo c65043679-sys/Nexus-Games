@@ -11,7 +11,35 @@ export const GlobalPartyListener: React.FC = () => {
     let lastSeenTs = 0;
 
     const firePartyEffects = (mode: string = 'fireworks') => {
-      if (mode === 'fireworks' || mode === 'all') {
+      if (mode === 'neon_strobe') {
+        // Flash neon border overlay
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.zIndex = '999999';
+        overlay.style.border = '12px solid #06b6d4';
+        overlay.style.boxShadow = 'inset 0 0 50px #06b6d4, 0 0 50px #06b6d4';
+        overlay.style.transition = 'all 0.2s ease';
+        overlay.className = 'animate-pulse';
+        document.body.appendChild(overlay);
+
+        let count = 0;
+        const colors = ['#06b6d4', '#7c3aed', '#f59e0b', '#ef4444', '#10b981', '#ec4899'];
+        const interval = setInterval(() => {
+          count++;
+          const color = colors[count % colors.length];
+          overlay.style.borderColor = color;
+          overlay.style.boxShadow = `inset 0 0 60px ${color}, 0 0 60px ${color}`;
+          if (count > 15) {
+            clearInterval(interval);
+            overlay.remove();
+          }
+        }, 180);
+
+        // Also fire quick confetti
+        confetti({ particleCount: 80, spread: 100, origin: { y: 0.5 }, zIndex: 9999 });
+      } else if (mode === 'fireworks' || mode === 'all') {
         const duration = 3 * 1000;
         const animationEnd = Date.now() + duration;
         const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
