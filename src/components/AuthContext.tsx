@@ -68,46 +68,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const userRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userRef);
+        setUser(user);
         const isUserOwner = (user.email?.toLowerCase() === 'c65043679@gmail.com') || (sessionStorage.getItem('isOwner') === 'true');
         const autoGamerTag = generateGamerTag(user.uid, isUserOwner, user.email);
         localStorage.setItem('username', autoGamerTag);
 
-        if (!userDoc.exists()) {
-          const newProfile = {
-            uid: user.uid,
-            displayName: autoGamerTag,
-            nickname: autoGamerTag,
-            email: user.email,
-            photoURL: user.photoURL,
-            favorites: [],
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          };
-          await setDoc(userRef, newProfile);
-        } else {
-          const data = userDoc.data();
-          const updates: any = {};
-          if (data?.nickname !== autoGamerTag || data?.displayName !== autoGamerTag) {
-            updates.nickname = autoGamerTag;
-            updates.displayName = autoGamerTag;
-          }
-          if (!data?.favorites) updates.favorites = [];
-          if (!data?.uid) updates.uid = user.uid;
-          if (Object.keys(updates).length > 0) {
-            await setDoc(userRef, updates, { merge: true });
-          }
-        }
-
-        // Listen to profile changes
-        unsubscribeProfile = onSnapshot(userRef, (doc) => {
-          if (doc.exists()) {
-            setProfile(doc.data() as UserProfile);
-          }
+        // Immediately set initial profile in state so user account loads without blocking
+        setProfile({
+          uid: user.uid,
+          displayName: autoGamerTag,
+          nickname: autoGamerTag,
+          email: user.email,
+          photoURL: user.photoURL,
+          favorites: []
         });
 
-        setUser(user);
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userRef);
+
+          if (!userDoc.exists()) {
+            const newProfile = {
+              uid: user.uid,
+              displayName: autoGamerTag,
+              nickname: autoGamerTag,
+              email: user.email,
+              photoURL: user.photoURL,
+              favorites: [],
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            };
+            await setDoc(userRef, newProfile);
+          } else {
+            const data = userDoc.data();
+            const updates: any = {};
+            if (data?.nickname !== autoGamerTag || data?.displayName !== autoGamerTag) {
+              updates.nickname = autoGamerTag;
+              updates.displayName = autoGamerTag;
+            }
+            if (!data?.favorites) updates.favorites = [];
+            if (!data?.uid) updates.uid = user.uid;
+            if (Object.keys(updates).length > 0) {
+              await setDoc(userRef, updates, { merge: true });
+            }
+          }
+
+          // Listen to profile changes
+          unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+            if (docSnap.exists()) {
+              setProfile(docSnap.data() as UserProfile);
+            }
+          }, (err) => {
+            console.warn("User profile snapshot warning:", err);
+          });
+        } catch (err) {
+          console.error("Firestore user profile init error:", err);
+        }
       } else {
         setUser(null);
         setProfile(null);
@@ -126,8 +142,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithPopup(auth, provider);
+    } catch (err: any) {
+      console.error("Sign-in popup error:", err);
+      if (err.code === 'auth/popup-blocked') {
+        alert("Pop-up was blocked by your browser. Please allow popups for this site to sign in.");
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        console.warn("Sign-in popup closed before completion.");
+      } else {
+        alert(`Sign-in failed: ${err.message || 'Unknown authentication error'}`);
+      }
+    }
   };
 
   const logout = () => {
