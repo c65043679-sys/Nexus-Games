@@ -70,7 +70,8 @@ export const Leaderboard: React.FC = () => {
           const pTot = typeof data.totalScore === 'number' ? data.totalScore : (pXp + pGp);
 
           // Auto-assigned clean GamerTag
-          const playerDisplayName = generateGamerTag(playerUid);
+          const isPlayerOwner = data.email?.toLowerCase() === 'c65043679@gmail.com' || data.isOwner;
+          const playerDisplayName = generateGamerTag(playerUid, isPlayerOwner, data.email);
 
           firestoreList.push({
             uid: playerUid,
@@ -96,7 +97,7 @@ export const Leaderboard: React.FC = () => {
 
         if (!isCurrentOwner) {
           const currentUid = user?.uid || 'current_active_user';
-          const currentName = generateGamerTag(currentUid);
+          const currentName = generateGamerTag(currentUid, isCurrentOwner, user?.email);
           localStorage.setItem('username', currentName);
 
           const unlockedCount = Object.keys(unlocked).length;

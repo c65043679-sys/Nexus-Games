@@ -1,54 +1,66 @@
 /**
- * Generates iconic legendary video game character handles based on a seed or UID.
- * Features legendary gaming icons like Gordon Freeman, Master Chief, Kratos, Mario, etc.
+ * Generates Half-Life and Half-Life 2 enemy handles based on a seed or UID.
+ * Owner handle is strictly designated as 'Gordon Freeman'.
  */
 
-const LEGENDARY_CHARACTERS = [
-  'Gordon Freeman',
-  'Master Chief',
-  'Mario',
-  'Link',
-  'Kratos',
-  'Solid Snake',
-  'Geralt of Rivia',
-  'Doom Slayer',
-  'Jin Sakai',
-  'Cloud Strife',
-  'Jack Cooper',
-  'Arthur Morgan',
-  'Captain Price',
-  'Nathan Drake',
-  'Agent 47',
-  'Ezio Auditore',
-  'Commander Shepard',
-  'Sephiroth',
-  'Leon Kennedy',
-  'Sans',
-  'Crash Bandicoot',
-  'Sub-Zero',
-  'Scorpion',
-  'Ryu',
-  'Trevor Philips',
-  'Duke Nukem',
-  'Marcus Fenix',
-  'Isaac Clarke',
-  'B.J. Blazkowicz',
-  'Corvo Attano',
-  'Johnny Silverhand',
-  'Donkey Kong',
-  'Sonic the Hedgehog',
-  'Mega Man',
-  'Sly Cooper',
-  'Ratchet',
-  'Spyro',
-  'Max Payne',
-  'Rayman',
-  'Pac-Man'
+const HL_ENEMIES = [
+  'Headcrab',
+  'Fast Headcrab',
+  'Poison Headcrab',
+  'Headcrab Zombie',
+  'Fast Zombie',
+  'Poison Zombie',
+  'Zombine',
+  'Barnacle',
+  'Vortigaunt',
+  'Houndeye',
+  'Bullsquid',
+  'Gargantua',
+  'Alien Grunt',
+  'Snark',
+  'Ichthyosaur',
+  'Tentacle',
+  'Nihilanth',
+  'Combine Soldier',
+  'Combine Elite',
+  'Civil Protection Metrocop',
+  'Combine Shotgunner',
+  'Combine Sniper',
+  'Strider',
+  'Combine Gunship',
+  'Combine Dropship',
+  'Hunter',
+  'Combine Advisor',
+  'Stalker',
+  'Manhack',
+  'City Scanner',
+  'Shield Scanner',
+  'Rollermine',
+  'Sentry Turret',
+  'Antlion',
+  'Antlion Guard',
+  'Antlion Worker',
+  'HECU Grunt',
+  'Black Ops Assassin',
+  'Alien Controller',
+  'Apache Gunship',
+  'Hydra',
+  'Crab Synth',
+  'Mortar Synth'
 ];
 
-export function generateGamerTag(seed?: string | null): string {
+export function generateGamerTag(seed?: string | null, isOwner?: boolean, email?: string | null): string {
+  if (isOwner || email?.toLowerCase() === 'c65043679@gmail.com') {
+    return 'Gordon Freeman';
+  }
+
   if (!seed || seed.trim() === '') {
-    return 'Master Chief';
+    return 'Combine Soldier';
+  }
+
+  const normalizedSeed = seed.trim().toLowerCase();
+  if (normalizedSeed === 'c65043679@gmail.com' || normalizedSeed === 'gordon' || normalizedSeed === 'gordon freeman' || normalizedSeed === 'owner') {
+    return 'Gordon Freeman';
   }
 
   let hash = 0;
@@ -58,7 +70,8 @@ export function generateGamerTag(seed?: string | null): string {
   }
 
   const positiveHash = Math.abs(hash);
-  const character = LEGENDARY_CHARACTERS[positiveHash % LEGENDARY_CHARACTERS.length];
+  const enemy = HL_ENEMIES[positiveHash % HL_ENEMIES.length];
 
-  return character;
+  return enemy;
 }
+

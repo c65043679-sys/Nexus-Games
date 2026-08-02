@@ -70,7 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (user) {
         const userRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userRef);
-        const autoGamerTag = generateGamerTag(user.uid);
+        const isUserOwner = (user.email?.toLowerCase() === 'c65043679@gmail.com') || (sessionStorage.getItem('isOwner') === 'true');
+        const autoGamerTag = generateGamerTag(user.uid, isUserOwner, user.email);
         localStorage.setItem('username', autoGamerTag);
 
         if (!userDoc.exists()) {
@@ -174,7 +175,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProfile = async (data: Partial<UserProfile>) => {
-    const chosenName = user?.uid ? generateGamerTag(user.uid) : generateGamerTag(localStorage.getItem('username'));
+    const isUserOwner = (user?.email?.toLowerCase() === 'c65043679@gmail.com') || isOwnerUnlocked;
+    const chosenName = user?.uid 
+      ? generateGamerTag(user.uid, isUserOwner, user.email) 
+      : generateGamerTag(localStorage.getItem('username'), isUserOwner);
     localStorage.setItem('username', chosenName);
 
     // Update local React state optimistically so UI updates immediately across all screens

@@ -40,7 +40,7 @@ const ACCENT_HUES = [
 ];
 
 export const Settings: React.FC = () => {
-  const { user, profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile, isOwner } = useAuth();
   const { settings, updateSetting, updateSettings, resetSettings, triggerPanic: rawTriggerPanic } = useSettings();
   const { unlockAchievement, wipeAllProgress } = useAchievements();
 
@@ -475,7 +475,7 @@ export const Settings: React.FC = () => {
                 <div>
                   <label className="block text-xs font-bold text-slate-400 mb-2">Assigned Gamer Tag</label>
                   <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold text-amber-400 font-mono flex items-center justify-between shadow-inner">
-                    <span>{generateGamerTag(user.uid)}</span>
+                    <span>{generateGamerTag(user.uid, isOwner, user.email)}</span>
                     <span className="text-[10px] text-slate-500 font-sans font-normal">Auto-Assigned</span>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1.5">
