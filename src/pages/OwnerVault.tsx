@@ -249,6 +249,13 @@ export const OwnerVault: React.FC = () => {
     setGodModeAura(next);
     localStorage.setItem('nexus_godmode_aura', next ? 'true' : 'false');
     window.dispatchEvent(new CustomEvent('nexus_godmode_toggle', { detail: next }));
+    try {
+      if ('BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('nexus_effects_channel');
+        bc.postMessage({ godModeAura: next });
+        bc.close();
+      }
+    } catch (e) {}
     playRetroSound(next ? 'powerup' : 'laser');
 
     try {
@@ -266,6 +273,13 @@ export const OwnerVault: React.FC = () => {
     setMatrixRain(next);
     localStorage.setItem('nexus_matrix_rain', next ? 'true' : 'false');
     window.dispatchEvent(new CustomEvent('nexus_matrix_toggle', { detail: next }));
+    try {
+      if ('BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('nexus_effects_channel');
+        bc.postMessage({ matrixRain: next });
+        bc.close();
+      }
+    } catch (e) {}
     playRetroSound(next ? 'powerup' : 'laser');
 
     try {
@@ -279,6 +293,18 @@ export const OwnerVault: React.FC = () => {
   };
 
   const handleTriggerGlobalParty = async (mode: 'fireworks' | 'cannon' = 'fireworks') => {
+    // 1. Instant local & broadcast dispatch
+    window.dispatchEvent(new CustomEvent('nexus_party_fire', { detail: { mode } }));
+    localStorage.setItem('nexus_party_signal', JSON.stringify({ mode, ts: Date.now() }));
+    try {
+      if ('BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('nexus_party_channel');
+        bc.postMessage({ mode, ts: Date.now() });
+        bc.close();
+      }
+    } catch (e) {}
+
+    // 2. Firestore global persistence
     try {
       await setDoc(doc(db, 'config', 'party'), {
         timestamp: Date.now(),
