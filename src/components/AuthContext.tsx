@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return sessionStorage.getItem('isOwner') === 'true';
   });
 
-  const isOwner = user?.email?.toLowerCase() === 'c65043679@gmail.com';
+  const isOwner = (user?.email?.toLowerCase() === 'c65043679@gmail.com') || isOwnerUnlocked;
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;

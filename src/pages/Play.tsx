@@ -6,7 +6,7 @@ import { useAuth } from '../components/AuthContext';
 import { useSettings } from '../components/SettingsContext';
 import { useAchievements } from '../components/AchievementsContext';
 import { db } from '../lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { GameCard } from '../components/GameCard';
 
 export const Play: React.FC = () => {
@@ -16,7 +16,27 @@ export const Play: React.FC = () => {
   const { unlockAchievement, incrementProgress, recordGamePlay, addGameTimePoints } = useAchievements();
   const allGames = getAllGames();
   const game = allGames.find((g) => g.id === id);
-  const godModeAura = localStorage.getItem('nexus_godmode_aura') === 'true';
+  const [godModeAura, setGodModeAura] = useState(() => localStorage.getItem('nexus_godmode_aura') === 'true');
+
+  useEffect(() => {
+    let unsub: (() => void) | null = null;
+    try {
+      unsub = onSnapshot(doc(db, 'config', 'effects'), (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          if (typeof data.godModeAura === 'boolean') {
+            setGodModeAura(data.godModeAura);
+            localStorage.setItem('nexus_godmode_aura', data.godModeAura ? 'true' : 'false');
+          }
+        }
+      }, (err) => console.warn('Play page effects listener error:', err));
+    } catch (e) {
+      console.error('Play page effects listener setup error:', e);
+    }
+    return () => {
+      if (unsub) unsub();
+    };
+  }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -299,6 +319,8 @@ export const Play: React.FC = () => {
               isFullscreen 
                 ? 'w-screen h-screen rounded-none border-none' 
                 : `rounded-3xl shadow-2xl shadow-[var(--accent)]/10 border border-white/10 ${
+                    godModeAura ? 'ring-4 ring-amber-400/80 shadow-[0_0_60px_rgba(251,191,36,0.6)]' : ''
+                  } ${
                     effectiveAspectRatio === 'portrait' ? 'aspect-[3/4] max-w-md mx-auto max-h-[70vh]' : 
                     effectiveAspectRatio === 'square' ? 'aspect-square max-w-2xl mx-auto max-h-[70vh]' : 
                     effectiveAspectRatio === 'four-three' ? 'aspect-[4/3] max-w-4xl mx-auto max-h-[70vh]' :

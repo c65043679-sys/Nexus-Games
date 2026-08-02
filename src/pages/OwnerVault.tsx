@@ -129,7 +129,7 @@ export const OwnerVault: React.FC = () => {
     return localStorage.getItem('nexus_matrix_rain') === 'true';
   });
 
-  // Sync injected games and broadcast from Firestore
+  // Sync injected games, broadcast, and visual effects from Firestore
   useEffect(() => {
     const unsubInjected = onSnapshot(collection(db, 'injected_games'), (snapshot) => {
       const list: Game[] = [];
@@ -145,9 +145,25 @@ export const OwnerVault: React.FC = () => {
       }
     }, (err) => console.warn('Broadcast listener error:', err));
 
+    const unsubEffects = onSnapshot(doc(db, 'config', 'effects'), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (typeof data.godModeAura === 'boolean') {
+          setGodModeAura(data.godModeAura);
+          localStorage.setItem('nexus_godmode_aura', data.godModeAura ? 'true' : 'false');
+        }
+        if (typeof data.matrixRain === 'boolean') {
+          setMatrixRain(data.matrixRain);
+          localStorage.setItem('nexus_matrix_rain', data.matrixRain ? 'true' : 'false');
+          window.dispatchEvent(new CustomEvent('nexus_matrix_toggle', { detail: data.matrixRain }));
+        }
+      }
+    }, (err) => console.warn('Effects listener error:', err));
+
     return () => {
       unsubInjected();
       unsubBroadcast();
+      unsubEffects();
     };
   }, []);
 
@@ -228,19 +244,39 @@ export const OwnerVault: React.FC = () => {
     }
   };
 
-  const toggleGodModeAura = () => {
+  const toggleGodModeAura = async () => {
     const next = !godModeAura;
     setGodModeAura(next);
     localStorage.setItem('nexus_godmode_aura', next ? 'true' : 'false');
     playRetroSound(next ? 'powerup' : 'laser');
+
+    try {
+      await setDoc(doc(db, 'config', 'effects'), {
+        godModeAura: next,
+        matrixRain: matrixRain,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (err) {
+      console.warn('Failed to sync godModeAura to firestore:', err);
+    }
   };
 
-  const toggleMatrixRain = () => {
+  const toggleMatrixRain = async () => {
     const next = !matrixRain;
     setMatrixRain(next);
     localStorage.setItem('nexus_matrix_rain', next ? 'true' : 'false');
     window.dispatchEvent(new CustomEvent('nexus_matrix_toggle', { detail: next }));
     playRetroSound(next ? 'powerup' : 'laser');
+
+    try {
+      await setDoc(doc(db, 'config', 'effects'), {
+        matrixRain: next,
+        godModeAura: godModeAura,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (err) {
+      console.warn('Failed to sync matrixRain to firestore:', err);
+    }
   };
 
   const handleTriggerGlobalParty = async (mode: 'fireworks' | 'cannon' = 'fireworks') => {

@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export const MatrixRainCanvas: React.FC = () => {
   const [isActive, setIsActive] = useState(() => {
@@ -11,7 +13,28 @@ export const MatrixRainCanvas: React.FC = () => {
       setIsActive(!!e.detail);
     };
     window.addEventListener('nexus_matrix_toggle' as any, handleToggle);
-    return () => window.removeEventListener('nexus_matrix_toggle' as any, handleToggle);
+
+    let unsub: (() => void) | null = null;
+    try {
+      unsub = onSnapshot(doc(db, 'config', 'effects'), (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          if (typeof data.matrixRain === 'boolean') {
+            setIsActive(data.matrixRain);
+            localStorage.setItem('nexus_matrix_rain', data.matrixRain ? 'true' : 'false');
+          }
+        }
+      }, (err) => {
+        console.warn('Matrix rain listener error:', err);
+      });
+    } catch (e) {
+      console.error('Matrix rain snapshot error:', e);
+    }
+
+    return () => {
+      window.removeEventListener('nexus_matrix_toggle' as any, handleToggle);
+      if (unsub) unsub();
+    };
   }, []);
 
   useEffect(() => {

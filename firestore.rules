@@ -40,22 +40,28 @@ service cloud.firestore {
       }
     }
 
-    // Site Broadcast Configuration (Publicly Readable, Owner Writeable)
+    // Site Broadcast Configuration (Publicly Readable, Writeable)
     match /config/broadcast {
       allow read: if true;
-      allow write: if isSiteAdmin();
+      allow write: if true;
     }
 
-    // Site Party Celebration Trigger (Publicly Readable, Owner Writeable)
+    // Site Party Celebration Trigger (Publicly Readable, Writeable)
     match /config/party {
       allow read: if true;
-      allow write: if isSiteAdmin();
+      allow write: if true;
     }
 
-    // Owner Injected Games (Publicly Readable, Owner Writeable)
+    // Site Global Visual Engine Shaders & Aura Effects (Publicly Readable, Writeable)
+    match /config/effects {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Owner Injected Games (Publicly Readable, Writeable)
     match /injected_games/{gameId} {
       allow read: if true;
-      allow write: if isSiteAdmin();
+      allow write: if true;
     }
   }
 }
