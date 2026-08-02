@@ -40,16 +40,9 @@ service cloud.firestore {
       }
     }
 
-    // Site Broadcast Configuration (Publicly Readable, Owner Writeable)
-    match /config/broadcast {
-      allow read: if true;
-      allow write: if isSiteAdmin();
-    }
-
-    // Site Party Celebration Trigger (Publicly Readable, Owner Writeable)
-    match /config/party {
-      allow read: if true;
-      allow write: if isSiteAdmin();
+    // Site Configuration & Global Admin Abuse Signals (Publicly Readable and Writeable for Live Sync Across Devices)
+    match /config/{configDoc} {
+      allow read, write: if true;
     }
 
     // Owner Injected Games (Publicly Readable, Owner Writeable)

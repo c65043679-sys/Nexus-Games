@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export const MatrixRainCanvas: React.FC = () => {
   const [isActive, setIsActive] = useState(() => {
@@ -6,12 +8,32 @@ export const MatrixRainCanvas: React.FC = () => {
   });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // Subscribe to Firestore for real-time global Matrix Rain state across all devices
   useEffect(() => {
+    let unsub: (() => void) | null = null;
+    try {
+      unsub = onSnapshot(doc(db, 'config', 'matrix_rain'), (snapshot) => {
+        if (snapshot.exists()) {
+          const active = !!snapshot.data().active;
+          setIsActive(active);
+          localStorage.setItem('nexus_matrix_rain', active ? 'true' : 'false');
+        }
+      }, (err) => {
+        console.warn('Matrix rain firestore listener offline:', err);
+      });
+    } catch (e) {
+      console.error('Matrix rain init error:', e);
+    }
+
     const handleToggle = (e: CustomEvent) => {
       setIsActive(!!e.detail);
     };
     window.addEventListener('nexus_matrix_toggle' as any, handleToggle);
-    return () => window.removeEventListener('nexus_matrix_toggle' as any, handleToggle);
+
+    return () => {
+      if (unsub) unsub();
+      window.removeEventListener('nexus_matrix_toggle' as any, handleToggle);
+    };
   }, []);
 
   useEffect(() => {

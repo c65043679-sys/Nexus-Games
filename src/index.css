@@ -102,3 +102,21 @@
   transition-duration: 0.001ms !important;
 }
 
+@keyframes globalScreenShake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  10% { transform: translate(-8px, -6px) rotate(-1.5deg); }
+  20% { transform: translate(7px, 5px) rotate(1.5deg); }
+  30% { transform: translate(-9px, 4px) rotate(-1deg); }
+  40% { transform: translate(8px, -5px) rotate(1deg); }
+  50% { transform: translate(-6px, 8px) rotate(-2deg); }
+  60% { transform: translate(9px, -3px) rotate(1.5deg); }
+  70% { transform: translate(-7px, 6px) rotate(-1deg); }
+  80% { transform: translate(6px, -8px) rotate(1deg); }
+  90% { transform: translate(-5px, 5px) rotate(-0.5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.animate-screen-shake {
+  animation: globalScreenShake 0.4s infinite;
+}
+

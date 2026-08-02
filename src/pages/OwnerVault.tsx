@@ -30,100 +30,7 @@ import {
   Rocket
 } from 'lucide-react';
 
-// Web Audio Synthesis Helper for Retro 8-bit Sounds & Realtime Waveforms
-const playRetroSound = (type: 'coin' | 'laser' | 'levelup' | 'win' | 'powerup' | 'overcharge' | 'plasma' | 'glitch' | 'bassdrop') => {
-  try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    const now = ctx.currentTime;
-
-    // Dispatch custom audio event for realtime spectrum canvas visualizer
-    window.dispatchEvent(new CustomEvent('nexus_audio_synth', { detail: { type } }));
-
-    if (type === 'coin') {
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(987.77, now);
-      osc.frequency.setValueAtTime(1318.51, now + 0.08);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-      osc.start(now);
-      osc.stop(now + 0.25);
-    } else if (type === 'laser') {
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(110, now + 0.15);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-      osc.start(now);
-      osc.stop(now + 0.15);
-    } else if (type === 'levelup') {
-      osc.type = 'triangle';
-      [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-        osc.frequency.setValueAtTime(freq, now + idx * 0.07);
-      });
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-      osc.start(now);
-      osc.stop(now + 0.35);
-    } else if (type === 'win') {
-      osc.type = 'square';
-      [440, 554.37, 659.25, 880].forEach((freq, idx) => {
-        osc.frequency.setValueAtTime(freq, now + idx * 0.1);
-      });
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-      osc.start(now);
-      osc.stop(now + 0.5);
-    } else if (type === 'powerup') {
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(220, now);
-      osc.frequency.linearRampToValueAtTime(880, now + 0.2);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-      osc.start(now);
-      osc.stop(now + 0.25);
-    } else if (type === 'overcharge') {
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(150, now);
-      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
-      gain.gain.setValueAtTime(0.4, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
-      osc.start(now);
-      osc.stop(now + 0.45);
-    } else if (type === 'plasma') {
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(1500, now);
-      osc.frequency.linearRampToValueAtTime(300, now + 0.18);
-      gain.gain.setValueAtTime(0.35, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-      osc.start(now);
-      osc.stop(now + 0.2);
-    } else if (type === 'glitch') {
-      osc.type = 'sawtooth';
-      for (let i = 0; i < 6; i++) {
-        osc.frequency.setValueAtTime(200 + Math.random() * 1200, now + i * 0.03);
-      }
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-      osc.start(now);
-      osc.stop(now + 0.2);
-    } else if (type === 'bassdrop') {
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(220, now);
-      osc.frequency.exponentialRampToValueAtTime(30, now + 0.6);
-      gain.gain.setValueAtTime(0.5, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.65);
-      osc.start(now);
-      osc.stop(now + 0.65);
-    }
-  } catch (e) {
-    console.error('Audio synthesis failed:', e);
-  }
-};
+import { playRetroSound } from '../utils/audioSynth';
 
 // Canvas 1: Realtime Audio Spectrum Equalizer
 const AudioSpectrumVisualizer: React.FC = () => {
@@ -434,9 +341,12 @@ export const OwnerVault: React.FC = () => {
   const [newControls, setNewControls] = useState('WASD to move, Space to action');
   const [injectSuccess, setInjectSuccess] = useState('');
 
-  // Announcement state
+  // Announcement & Admin Takeover state
   const [announcementText, setAnnouncementText] = useState('');
   const [announceSuccess, setAnnounceSuccess] = useState('');
+  const [popupTitleInput, setPopupTitleInput] = useState('👑 OVERLORD ADMIN ABUSE ALERT');
+  const [popupMsgInput, setPopupMsgInput] = useState('WARNING: The Overlord has assumed total screen control! Bow down!');
+  const [popupSending, setPopupSending] = useState(false);
 
   // God Mode hacks
   const [godModeAura, setGodModeAura] = useState(() => {
@@ -552,12 +462,69 @@ export const OwnerVault: React.FC = () => {
     playRetroSound(next ? 'powerup' : 'laser');
   };
 
-  const toggleMatrixRain = () => {
+  const toggleMatrixRain = async () => {
     const next = !matrixRain;
     setMatrixRain(next);
     localStorage.setItem('nexus_matrix_rain', next ? 'true' : 'false');
     window.dispatchEvent(new CustomEvent('nexus_matrix_toggle', { detail: next }));
     playRetroSound(next ? 'powerup' : 'laser');
+    try {
+      await setDoc(doc(db, 'config', 'matrix_rain'), {
+        active: next,
+        updatedBy: user?.email || 'c65043679@gmail.com',
+        timestamp: Date.now()
+      });
+    } catch (e) {
+      console.error('Failed to sync matrix rain:', e);
+    }
+  };
+
+  const handleBroadcastSoundLive = async (sound: 'coin' | 'laser' | 'levelup' | 'win' | 'powerup' | 'overcharge' | 'plasma' | 'glitch' | 'bassdrop') => {
+    playRetroSound(sound);
+    try {
+      await setDoc(doc(db, 'config', 'sound_effect'), {
+        sound,
+        triggeredBy: user?.email || 'c65043679@gmail.com',
+        timestamp: Date.now()
+      });
+    } catch (e) {
+      console.error('Failed to broadcast sound effect:', e);
+    }
+  };
+
+  const handleTriggerScreenShake = async () => {
+    playRetroSound('bassdrop');
+    try {
+      await setDoc(doc(db, 'config', 'screen_shake'), {
+        timestamp: Date.now(),
+        triggeredBy: user?.email || 'c65043679@gmail.com'
+      });
+      setPartyTriggerSuccess('🌋 Global Earthquake Screen Shake sent live to all connected devices!');
+      setTimeout(() => setPartyTriggerSuccess(''), 4500);
+    } catch (e) {
+      console.error('Failed to trigger screen shake:', e);
+    }
+  };
+
+  const handleSendAdminPopup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!popupMsgInput.trim()) return;
+    setPopupSending(true);
+    try {
+      await setDoc(doc(db, 'config', 'admin_popup'), {
+        title: popupTitleInput.trim() || '👑 OVERLORD ADMIN ABUSE ALERT',
+        message: popupMsgInput.trim(),
+        sender: user?.displayName || user?.email || 'c65043679@gmail.com',
+        timestamp: Date.now()
+      });
+      playRetroSound('overcharge');
+      setAnnounceSuccess('🚀 Admin Takeover Alert Modal broadcasted live to all devices!');
+      setTimeout(() => setAnnounceSuccess(''), 4000);
+    } catch (err) {
+      console.error('Failed to send admin popup:', err);
+    } finally {
+      setPopupSending(false);
+    }
   };
 
   const handleTriggerGlobalParty = async (mode: 'fireworks' | 'cannon' | 'neon_strobe' = 'fireworks') => {
@@ -741,11 +708,13 @@ export const OwnerVault: React.FC = () => {
               ].map((s) => (
                 <button
                   key={s.name}
-                  onClick={() => playRetroSound(s.type)}
-                  className={`p-3 bg-black/40 border border-white/10 rounded-2xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/10 transition-all flex flex-col items-center gap-1.5 ${s.color} active:scale-95 cursor-pointer`}
+                  onClick={() => handleBroadcastSoundLive(s.type)}
+                  className={`p-3 bg-black/40 border border-white/10 rounded-2xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/10 transition-all flex flex-col items-center gap-1.5 ${s.color} active:scale-95 cursor-pointer group`}
+                  title="Broadcast sound live to all connected devices"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <Sparkles className="w-4 h-4 text-amber-400 group-hover:animate-spin" />
                   <span>{s.name}</span>
+                  <span className="text-[9px] text-amber-400/80 font-mono font-normal">📡 Broadcast Live</span>
                 </button>
               ))}
             </div>
@@ -1032,7 +1001,7 @@ export const OwnerVault: React.FC = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
                   onClick={() => handleTriggerGlobalParty('fireworks')}
                   className="p-5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black font-black text-sm rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 flex items-center justify-between cursor-pointer group"
@@ -1042,7 +1011,7 @@ export const OwnerVault: React.FC = () => {
                       <Rocket className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-black">Launch Fireworks</p>
+                      <p className="text-sm font-black">Fireworks</p>
                       <p className="text-[11px] opacity-80">Full particle shower</p>
                     </div>
                   </div>
@@ -1074,8 +1043,24 @@ export const OwnerVault: React.FC = () => {
                       <Zap className="w-5 h-5 group-hover:animate-bounce" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-black">Neon Strobe Flash</p>
-                      <p className="text-[11px] opacity-80">Global viewport border glow</p>
+                      <p className="text-sm font-black">Neon Strobe</p>
+                      <p className="text-[11px] opacity-80">Border glow flash</p>
+                    </div>
+                  </div>
+                  <Sparkles className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={handleTriggerScreenShake}
+                  className="p-5 bg-gradient-to-r from-red-600 via-rose-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black text-sm rounded-2xl shadow-xl shadow-red-500/20 transition-all active:scale-95 flex items-center justify-between cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-white">
+                      <Activity className="w-5 h-5 group-hover:animate-ping" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-black">Earthquake Shake</p>
+                      <p className="text-[11px] opacity-80">Screen vibration blast</p>
                     </div>
                   </div>
                   <Sparkles className="w-5 h-5" />
@@ -1221,6 +1206,59 @@ export const OwnerVault: React.FC = () => {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Section 2: Full-Screen Admin Takeover Alert Modal Popup */}
+          <div className="pt-6 border-t border-white/10 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <Crown className="w-5 h-5 animate-bounce" />
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-white">Global Admin Takeover Screen Modal Popup</h4>
+                <p className="text-xs text-slate-400">Force a high-priority, full-screen admin warning modal onto all connected devices live</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSendAdminPopup} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Modal Header Title
+                  </label>
+                  <input
+                    type="text"
+                    value={popupTitleInput}
+                    onChange={(e) => setPopupTitleInput(e.target.value)}
+                    placeholder="e.g. 👑 OVERLORD ADMIN ABUSE ALERT"
+                    className="w-full bg-black/40 border border-amber-500/30 rounded-2xl px-4 py-3 text-xs text-amber-300 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Custom Admin Message *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={popupMsgInput}
+                    onChange={(e) => setPopupMsgInput(e.target.value)}
+                    placeholder="e.g. The Overlord has taken over your screen!"
+                    className="w-full bg-black/40 border border-amber-500/30 rounded-2xl px-4 py-3 text-xs text-amber-200 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={popupSending}
+                className="px-6 py-3.5 bg-gradient-to-r from-red-600 via-amber-500 to-yellow-500 hover:from-red-500 hover:to-yellow-400 text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                <Sparkles className="w-4 h-4" />
+                {popupSending ? 'Transmitting Overlord Signal...' : 'Broadcast Fullscreen Admin Takeover Modal Live'}
+              </button>
+            </form>
           </div>
         </motion.div>
       )}
