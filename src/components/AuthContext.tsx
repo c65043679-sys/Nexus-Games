@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return sessionStorage.getItem('isOwner') === 'true';
   });
 
-  const isOwner = user?.email?.toLowerCase() === 'c65043679@gmail.com' || isOwnerUnlocked;
+  const isOwner = user?.email?.toLowerCase() === 'c65043679@gmail.com';
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;
@@ -71,16 +71,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userRef);
         const autoGamerTag = generateGamerTag(user.uid);
-        const userIsOwner = user.email?.toLowerCase() === 'c65043679@gmail.com' || isOwnerUnlocked;
+        localStorage.setItem('username', autoGamerTag);
 
         if (!userDoc.exists()) {
-          const initialName = userIsOwner ? (user.displayName || 'Nexus Overlord') : autoGamerTag;
-          localStorage.setItem('username', initialName);
-
           const newProfile = {
             uid: user.uid,
-            displayName: initialName,
-            nickname: initialName,
+            displayName: autoGamerTag,
+            nickname: autoGamerTag,
             email: user.email,
             photoURL: user.photoURL,
             favorites: [],
@@ -91,19 +88,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           const data = userDoc.data();
           const updates: any = {};
-          if (!userIsOwner) {
-            // Non-owners strictly get autoGamerTag
-            localStorage.setItem('username', autoGamerTag);
-            if (data?.nickname !== autoGamerTag || data?.displayName !== autoGamerTag) {
-              updates.nickname = autoGamerTag;
-              updates.displayName = autoGamerTag;
-            }
-          } else {
-            // Owner preserves custom name if set
-            const ownerName = data?.nickname || data?.displayName || 'Nexus Overlord';
-            localStorage.setItem('username', ownerName);
+          if (data?.nickname !== autoGamerTag || data?.displayName !== autoGamerTag) {
+            updates.nickname = autoGamerTag;
+            updates.displayName = autoGamerTag;
           }
-
           if (!data?.favorites) updates.favorites = [];
           if (!data?.uid) updates.uid = user.uid;
           if (Object.keys(updates).length > 0) {
@@ -186,15 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProfile = async (data: Partial<UserProfile>) => {
-    let chosenName: string;
-    const userIsOwner = user?.email?.toLowerCase() === 'c65043679@gmail.com' || isOwnerUnlocked;
-
-    if (userIsOwner && (data.nickname || data.displayName)) {
-      chosenName = (data.nickname || data.displayName)!.trim();
-    } else {
-      chosenName = user?.uid ? generateGamerTag(user.uid) : generateGamerTag(localStorage.getItem('username'));
-    }
-
+    const chosenName = user?.uid ? generateGamerTag(user.uid) : generateGamerTag(localStorage.getItem('username'));
     localStorage.setItem('username', chosenName);
 
     // Update local React state optimistically so UI updates immediately across all screens
