@@ -248,12 +248,12 @@ export const OwnerVault: React.FC = () => {
     const next = !godModeAura;
     setGodModeAura(next);
     localStorage.setItem('nexus_godmode_aura', next ? 'true' : 'false');
+    window.dispatchEvent(new CustomEvent('nexus_godmode_toggle', { detail: next }));
     playRetroSound(next ? 'powerup' : 'laser');
 
     try {
       await setDoc(doc(db, 'config', 'effects'), {
         godModeAura: next,
-        matrixRain: matrixRain,
         updatedAt: new Date().toISOString()
       }, { merge: true });
     } catch (err) {
@@ -271,7 +271,6 @@ export const OwnerVault: React.FC = () => {
     try {
       await setDoc(doc(db, 'config', 'effects'), {
         matrixRain: next,
-        godModeAura: godModeAura,
         updatedAt: new Date().toISOString()
       }, { merge: true });
     } catch (err) {

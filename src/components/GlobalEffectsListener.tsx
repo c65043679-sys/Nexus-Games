@@ -38,6 +38,6 @@ export const GlobalEffectsListener: React.FC = () => {
   if (!godModeAura) return null;
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-40 border-4 border-amber-400/40 shadow-[inset_0_0_80px_rgba(251,191,36,0.25)] animate-pulse transition-all duration-700" />
+    <div className="fixed inset-0 pointer-events-none z-50 border-4 border-amber-400/70 shadow-[inset_0_0_100px_rgba(251,191,36,0.4)] animate-pulse transition-all duration-700" />
   );
 };

@@ -95,7 +95,7 @@ export const MatrixRainCanvas: React.FC = () => {
   return (
     <canvas 
       ref={canvasRef} 
-      className="fixed inset-0 pointer-events-none z-0 opacity-25"
+      className="fixed inset-0 pointer-events-none z-20 opacity-40 mix-blend-screen"
     />
   );
 };
