@@ -376,9 +376,9 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         updatedAt: new Date().toISOString()
       }, { merge: true }).catch(() => {});
 
-      let activeName = profile?.nickname || localStorage.getItem('username') || 'tnm17';
-      if (activeName.toLowerCase().includes('sarsero') || containsProfanity(activeName)) {
-        activeName = 'tnm17';
+      let activeName = profile?.nickname || localStorage.getItem('username') || 'Nexus Explorer';
+      if (containsProfanity(activeName) || activeName.toLowerCase().includes('sarsero')) {
+        activeName = 'Nexus Explorer';
       }
 
       const userDocData: any = {

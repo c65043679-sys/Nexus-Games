@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
 import { useSettings, TAB_CLOAK_PRESETS, CANVAS_THEMES } from '../components/SettingsContext';
 import { useAchievements } from '../components/AchievementsContext';
-import { validateNickname, checkNicknameUniqueness, containsProfanity } from '../utils/profanityFilter';
+import { generateGamerTag } from '../utils/nameGenerator';
 import { 
   User as UserIcon, 
   Save, 
@@ -48,8 +48,6 @@ export const Settings: React.FC = () => {
     try { unlockAchievement('panic_agent'); } catch (e) {}
     rawTriggerPanic();
   };
-  const [nickname, setNickname] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [showWipeModal, setShowWipeModal] = useState(false);
   const [isWipingProgress, setIsWipingProgress] = useState(false);
@@ -67,51 +65,6 @@ export const Settings: React.FC = () => {
       setTimeout(() => setMessage(''), 5000);
     } finally {
       setIsWipingProgress(false);
-    }
-  };
-
-  useEffect(() => {
-    let name = profile?.nickname || localStorage.getItem('username') || '';
-    if (name.toLowerCase().includes('sarsero') || containsProfanity(name)) {
-      name = 'tnm17';
-    }
-    setNickname(name);
-  }, [profile]);
-
-  const handleSaveProfile = async () => {
-    if (!user) return;
-
-    const validation = validateNickname(nickname);
-    if (!validation.isValid) {
-      setMessage(`Error: ${validation.error}`);
-      setTimeout(() => setMessage(''), 5000);
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const uniqueness = await checkNicknameUniqueness(nickname.trim(), user.uid);
-      if (!uniqueness.isUnique) {
-        setMessage(`Error: ${uniqueness.error || 'Nickname is already taken.'}`);
-        setTimeout(() => setMessage(''), 5000);
-        setIsSaving(false);
-        return;
-      }
-
-      await updateProfile({
-        nickname: nickname.trim(),
-        displayName: nickname.trim(),
-        themeColor: settings.themeColor,
-      });
-      localStorage.setItem('username', nickname.trim());
-      setMessage('Profile and preferences synced successfully!');
-      setTimeout(() => setMessage(''), 3500);
-    } catch (err: any) {
-      console.error(err);
-      setMessage(`Error: ${err.message || 'Failed to update profile'}`);
-      setTimeout(() => setMessage(''), 5000);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -520,14 +473,14 @@ export const Settings: React.FC = () => {
             {user ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-2">Display Handle</label>
-                  <input
-                    type="text"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    placeholder="Enter nickname..."
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                  />
+                  <label className="block text-xs font-bold text-slate-400 mb-2">Assigned Gamer Tag</label>
+                  <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold text-amber-400 font-mono flex items-center justify-between shadow-inner">
+                    <span>{generateGamerTag(user.uid)}</span>
+                    <span className="text-[10px] text-slate-500 font-sans font-normal">Auto-Assigned</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1.5">
+                    Community handle is deterministically assigned to keep rankings clean and fair.
+                  </p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-black/40 border border-white/5 text-xs space-y-2">
@@ -540,15 +493,6 @@ export const Settings: React.FC = () => {
                     <span className="text-emerald-400 font-bold">Active Member</span>
                   </div>
                 </div>
-
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={isSaving}
-                  className="w-full py-3.5 bg-[var(--accent)] hover:brightness-110 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-[var(--accent)]/20 active:scale-95 disabled:opacity-50"
-                >
-                  <Save className={`w-4 h-4 ${isSaving ? 'animate-spin' : ''}`} />
-                  {isSaving ? 'Syncing...' : 'Save Profile'}
-                </button>
               </div>
             ) : (
               <div className="text-center py-4 space-y-3">

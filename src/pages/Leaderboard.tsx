@@ -10,17 +10,13 @@ import {
   User as UserIcon,
   BarChart3,
   Users,
-  Edit3,
-  CheckCircle2,
-  AlertCircle,
-  Save,
   Sparkles
 } from 'lucide-react';
 import { useAuth } from '../components/AuthContext';
 import { useAchievements } from '../components/AchievementsContext';
 import { db } from '../lib/firebase';
-import { collection, getDocs, doc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
-import { validateNickname, checkNicknameUniqueness, containsProfanity } from '../utils/profanityFilter';
+import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { generateGamerTag } from '../utils/nameGenerator';
 
 export interface LeaderboardPlayer {
   uid: string;
@@ -39,29 +35,13 @@ export interface LeaderboardPlayer {
 }
 
 export const Leaderboard: React.FC = () => {
-  const { user, profile, isOwner, updateProfile } = useAuth();
+  const { user, profile, isOwner } = useAuth();
   const { totalScore, totalXp, gamePoints, gamesPlayed, unlocked, levelTitle } = useAchievements();
 
   const [players, setPlayers] = useState<LeaderboardPlayer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'totalScore' | 'gamePoints' | 'achievementXp' | 'gamesPlayed'>('totalScore');
-
-  // Nickname Editing State
-  const [editMode, setEditMode] = useState<boolean>(false);
-  const [nicknameInput, setNicknameInput] = useState<string>('');
-  const [nicknameError, setNicknameError] = useState<string>('');
-  const [nicknameSuccess, setNicknameSuccess] = useState<string>('');
-  const [isSavingNickname, setIsSavingNickname] = useState<boolean>(false);
-
-  // Initialize nickname input
-  useEffect(() => {
-    let currentName = profile?.nickname || localStorage.getItem('username') || '';
-    if (currentName.toLowerCase().includes('sarsero') || containsProfanity(currentName)) {
-      currentName = 'tnm17';
-    }
-    setNicknameInput(currentName);
-  }, [profile]);
 
   useEffect(() => {
     let unsub: (() => void) | undefined;
@@ -89,19 +69,8 @@ export const Leaderboard: React.FC = () => {
           const pGp = typeof data.gamePoints === 'number' ? data.gamePoints : (data.gamesPlayed || 0) * 50;
           const pTot = typeof data.totalScore === 'number' ? data.totalScore : (pXp + pGp);
 
-          let playerDisplayName = data.nickname || data.displayName || 'tnm17';
-
-          // Auto-sanitize bad word names and sarsero names
-          if (containsProfanity(playerDisplayName) || playerDisplayName.toLowerCase().includes('sarsero')) {
-            playerDisplayName = 'tnm17';
-            // Auto-reset in Firestore database
-            setDoc(doc(db, 'users', playerUid), {
-              uid: playerUid,
-              nickname: 'tnm17',
-              displayName: 'tnm17',
-              updatedAt: new Date().toISOString()
-            }, { merge: true }).catch(() => {});
-          }
+          // Auto-assigned clean GamerTag
+          const playerDisplayName = generateGamerTag(playerUid);
 
           firestoreList.push({
             uid: playerUid,
@@ -127,12 +96,8 @@ export const Leaderboard: React.FC = () => {
 
         if (!isCurrentOwner) {
           const currentUid = user?.uid || 'current_active_user';
-          let currentName = profile?.nickname || localStorage.getItem('username') || 'tnm17';
-
-          if (containsProfanity(currentName) || currentName.toLowerCase().includes('sarsero')) {
-            currentName = 'tnm17';
-            localStorage.setItem('username', 'tnm17');
-          }
+          const currentName = generateGamerTag(currentUid);
+          localStorage.setItem('username', currentName);
 
           const unlockedCount = Object.keys(unlocked).length;
 
@@ -174,67 +139,6 @@ export const Leaderboard: React.FC = () => {
       if (unsub) unsub();
     };
   }, [user, profile, isOwner, totalScore, totalXp, gamePoints, gamesPlayed, unlocked, levelTitle]);
-
-  // Handle Nickname Update with Profanity Validation
-  const handleSaveNickname = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setNicknameError('');
-    setNicknameSuccess('');
-
-    const validation = validateNickname(nicknameInput);
-    if (!validation.isValid) {
-      setNicknameError(validation.error || 'Invalid nickname.');
-      return;
-    }
-
-    const cleanNickname = nicknameInput.trim();
-    setIsSavingNickname(true);
-
-    try {
-      // Check uniqueness against existing leaderboard players / Firestore users
-      const uniqueness = await checkNicknameUniqueness(cleanNickname, user?.uid);
-      if (!uniqueness.isUnique) {
-        setNicknameError(uniqueness.error || 'That nickname is already taken.');
-        setIsSavingNickname(false);
-        return;
-      }
-
-      // 1. Save to Local Storage for instant persistence
-      localStorage.setItem('username', cleanNickname);
-
-      // 2. Save to Firestore profile if authenticated
-      if (user) {
-        await updateProfile({
-          uid: user.uid,
-          nickname: cleanNickname,
-          displayName: cleanNickname
-        });
-
-        // Also update Firestore users document explicitly
-        try {
-          const userRef = doc(db, 'users', user.uid);
-          await setDoc(userRef, {
-            uid: user.uid,
-            nickname: cleanNickname,
-            displayName: cleanNickname,
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
-        } catch (fErr) {
-          console.warn('Firestore doc sync error:', fErr);
-        }
-      }
-
-      setNicknameSuccess('Leaderboard nickname updated successfully!');
-      setEditMode(false);
-
-      setTimeout(() => setNicknameSuccess(''), 4000);
-    } catch (err: any) {
-      console.error('Failed to save nickname:', err);
-      setNicknameError('Failed to update nickname. Please try again.');
-    } finally {
-      setIsSavingNickname(false);
-    }
-  };
 
   // Sort & Search
   const filteredPlayers = players
@@ -285,20 +189,8 @@ export const Leaderboard: React.FC = () => {
 
           {!isOwner && (
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-              {/* Nickname Editor Trigger */}
-              <button
-                onClick={() => {
-                  setEditMode(!editMode);
-                  setNicknameError('');
-                }}
-                className="px-3.5 py-2 bg-indigo-600/30 border border-indigo-500/40 hover:bg-indigo-600/50 text-indigo-200 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-95"
-              >
-                <Edit3 className="w-4 h-4 text-indigo-400" />
-                <span>{editMode ? 'Close Editor' : 'Change Nickname'}</span>
-              </button>
-
               {currentUserRank !== -1 && (
-                <div className="flex items-center gap-4 bg-indigo-950/60 border border-indigo-500/30 p-3 rounded-xl backdrop-blur-md shrink-0">
+                <div className="flex items-center gap-4 bg-indigo-950/60 border border-indigo-500/30 p-3 rounded-xl backdrop-blur-md shrink-0 whitespace-nowrap">
                   <div className="text-right">
                     <p className="text-[10px] text-indigo-300 uppercase font-mono font-semibold">Your Rank</p>
                     <p className="text-lg font-black text-white font-mono">#{currentUserRank + 1}</p>
@@ -313,70 +205,6 @@ export const Leaderboard: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Inline Nickname Editor Modal/Card */}
-        {editMode && !isOwner && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-indigo-950/80 border border-indigo-500/40 rounded-2xl p-5 backdrop-blur-xl relative z-20 space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <h3 className="text-sm font-bold text-white">Leaderboard Alias Settings</h3>
-              </div>
-              <span className="text-[10px] text-slate-400 font-mono">Profanity Filter Active</span>
-            </div>
-
-            <form onSubmit={handleSaveNickname} className="space-y-3">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <input
-                    type="text"
-                    value={nicknameInput}
-                    onChange={(e) => {
-                      setNicknameInput(e.target.value);
-                      setNicknameError('');
-                    }}
-                    placeholder="Enter your custom leaderboard nickname..."
-                    maxLength={20}
-                    className="w-full bg-slate-900 border border-white/15 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-500">
-                    {nicknameInput.length}/20
-                  </span>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSavingNickname || !nicknameInput.trim()}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-600/30 disabled:opacity-50 cursor-pointer active:scale-95"
-                >
-                  <Save className={`w-4 h-4 ${isSavingNickname ? 'animate-spin' : ''}`} />
-                  {isSavingNickname ? 'Saving...' : 'Update Nickname'}
-                </button>
-              </div>
-
-              {/* Error Alert for Bad Words or Invalid Length */}
-              {nicknameError && (
-                <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-xl flex items-center gap-2.5 text-red-300 text-xs font-semibold">
-                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                  <span>{nicknameError}</span>
-                </div>
-              )}
-            </form>
-          </motion.div>
-        )}
-
-        {/* Success Toast */}
-        {nicknameSuccess && (
-          <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl flex items-center gap-2.5 text-emerald-300 text-xs font-semibold">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{nicknameSuccess}</span>
-          </div>
-        )}
 
         {/* Scoring Guide Info */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">

@@ -3,6 +3,7 @@ import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut,
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
 import { containsProfanity } from '../utils/profanityFilter';
+import { generateGamerTag } from '../utils/nameGenerator';
 
 interface UserProfile {
   uid: string;
@@ -69,19 +70,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (user) {
         const userRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userRef);
-        
-        if (!userDoc.exists()) {
-          let activeNickname = 'tnm17';
-          const savedLocal = localStorage.getItem('username');
-          if (savedLocal && !containsProfanity(savedLocal) && !savedLocal.toLowerCase().includes('sarsero')) {
-            activeNickname = savedLocal.trim();
-          }
-          localStorage.setItem('username', activeNickname);
+        const autoGamerTag = generateGamerTag(user.uid);
+        localStorage.setItem('username', autoGamerTag);
 
+        if (!userDoc.exists()) {
           const newProfile = {
             uid: user.uid,
-            displayName: activeNickname,
-            nickname: activeNickname,
+            displayName: autoGamerTag,
+            nickname: autoGamerTag,
             email: user.email,
             photoURL: user.photoURL,
             favorites: [],
@@ -90,28 +86,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           await setDoc(userRef, newProfile);
         } else {
-          // Sync for existing users: prioritize saved Firestore nickname/displayName
           const data = userDoc.data();
-          let activeNickname = data?.nickname || '';
-          
-          if (!activeNickname || activeNickname.toLowerCase().includes('sarsero') || containsProfanity(activeNickname)) {
-            const savedLocal = localStorage.getItem('username');
-            if (savedLocal && !containsProfanity(savedLocal) && !savedLocal.toLowerCase().includes('sarsero')) {
-              activeNickname = savedLocal.trim();
-            } else {
-              activeNickname = 'tnm17';
-            }
-          }
-
-          localStorage.setItem('username', activeNickname);
-
           const updates: any = {};
+          if (data?.nickname !== autoGamerTag || data?.displayName !== autoGamerTag) {
+            updates.nickname = autoGamerTag;
+            updates.displayName = autoGamerTag;
+          }
           if (!data?.favorites) updates.favorites = [];
           if (!data?.uid) updates.uid = user.uid;
-          if (activeNickname !== data?.nickname || activeNickname !== data?.displayName) {
-            updates.nickname = activeNickname;
-            updates.displayName = activeNickname;
-          }
           if (Object.keys(updates).length > 0) {
             await setDoc(userRef, updates, { merge: true });
           }
@@ -192,11 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProfile = async (data: Partial<UserProfile>) => {
-    let chosenName = data.nickname || data.displayName || profile?.nickname || localStorage.getItem('username') || 'tnm17';
-    if (chosenName.toLowerCase().includes('sarsero') || containsProfanity(chosenName)) {
-      chosenName = 'tnm17';
-    }
-
+    const chosenName = user?.uid ? generateGamerTag(user.uid) : generateGamerTag(localStorage.getItem('username'));
     localStorage.setItem('username', chosenName);
 
     // Update local React state optimistically so UI updates immediately across all screens
