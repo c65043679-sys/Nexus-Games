@@ -5,6 +5,7 @@ import { useSettings } from './SettingsContext';
 import { soundManager } from '../utils/soundEffects';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { containsProfanity } from '../utils/profanityFilter';
 import { Trophy, Star, Sparkles, Zap, Crown, ShieldAlert, Palette, Eye, Radio, Flame, Lock, Unlock, CheckCircle2, Rocket } from 'lucide-react';
 
 export interface Achievement {
@@ -375,7 +376,10 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         updatedAt: new Date().toISOString()
       }, { merge: true }).catch(() => {});
 
-      const activeName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'Nexus Explorer';
+      let activeName = profile?.nickname || localStorage.getItem('username') || 'tnm17';
+      if (activeName.toLowerCase().includes('sarsero') || containsProfanity(activeName)) {
+        activeName = 'tnm17';
+      }
 
       const userDocData: any = {
         uid: user.uid,

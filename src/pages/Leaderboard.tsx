@@ -56,7 +56,10 @@ export const Leaderboard: React.FC = () => {
 
   // Initialize nickname input
   useEffect(() => {
-    const currentName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || '';
+    let currentName = profile?.nickname || localStorage.getItem('username') || '';
+    if (currentName.toLowerCase().includes('sarsero') || containsProfanity(currentName)) {
+      currentName = 'tnm17';
+    }
     setNicknameInput(currentName);
   }, [profile]);
 
@@ -86,16 +89,16 @@ export const Leaderboard: React.FC = () => {
           const pGp = typeof data.gamePoints === 'number' ? data.gamePoints : (data.gamesPlayed || 0) * 50;
           const pTot = typeof data.totalScore === 'number' ? data.totalScore : (pXp + pGp);
 
-          let playerDisplayName = data.nickname || data.displayName || 'Nexus Explorer';
+          let playerDisplayName = data.nickname || data.displayName || 'tnm17';
 
-          // Auto-sanitize bad word names
-          if (containsProfanity(playerDisplayName)) {
-            playerDisplayName = 'Nexus Explorer';
+          // Auto-sanitize bad word names and sarsero names
+          if (containsProfanity(playerDisplayName) || playerDisplayName.toLowerCase().includes('sarsero')) {
+            playerDisplayName = 'tnm17';
             // Auto-reset in Firestore database
             setDoc(doc(db, 'users', playerUid), {
               uid: playerUid,
-              nickname: 'Nexus Explorer',
-              displayName: 'Nexus Explorer',
+              nickname: 'tnm17',
+              displayName: 'tnm17',
               updatedAt: new Date().toISOString()
             }, { merge: true }).catch(() => {});
           }
@@ -124,11 +127,11 @@ export const Leaderboard: React.FC = () => {
 
         if (!isCurrentOwner) {
           const currentUid = user?.uid || 'current_active_user';
-          let currentName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'You (Nexus Gamer)';
+          let currentName = profile?.nickname || localStorage.getItem('username') || 'tnm17';
 
-          if (containsProfanity(currentName)) {
-            currentName = 'Nexus Explorer';
-            localStorage.setItem('username', 'Nexus Explorer');
+          if (containsProfanity(currentName) || currentName.toLowerCase().includes('sarsero')) {
+            currentName = 'tnm17';
+            localStorage.setItem('username', 'tnm17');
           }
 
           const unlockedCount = Object.keys(unlocked).length;

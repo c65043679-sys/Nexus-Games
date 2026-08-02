@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../components/AuthContext';
 import { useSettings, TAB_CLOAK_PRESETS, CANVAS_THEMES } from '../components/SettingsContext';
 import { useAchievements } from '../components/AchievementsContext';
-import { validateNickname, checkNicknameUniqueness } from '../utils/profanityFilter';
+import { validateNickname, checkNicknameUniqueness, containsProfanity } from '../utils/profanityFilter';
 import { 
   User as UserIcon, 
   Save, 
@@ -71,9 +71,11 @@ export const Settings: React.FC = () => {
   };
 
   useEffect(() => {
-    if (profile) {
-      setNickname(profile.nickname || profile.displayName || '');
+    let name = profile?.nickname || localStorage.getItem('username') || '';
+    if (name.toLowerCase().includes('sarsero') || containsProfanity(name)) {
+      name = 'tnm17';
     }
+    setNickname(name);
   }, [profile]);
 
   const handleSaveProfile = async () => {

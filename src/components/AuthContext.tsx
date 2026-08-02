@@ -71,9 +71,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userDoc = await getDoc(userRef);
         
         if (!userDoc.exists()) {
-          let activeNickname = 'Nexus Explorer';
+          let activeNickname = 'tnm17';
           const savedLocal = localStorage.getItem('username');
-          if (savedLocal && !containsProfanity(savedLocal)) {
+          if (savedLocal && !containsProfanity(savedLocal) && !savedLocal.toLowerCase().includes('sarsero')) {
             activeNickname = savedLocal.trim();
           }
           localStorage.setItem('username', activeNickname);
@@ -92,10 +92,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           // Sync for existing users: prioritize saved Firestore nickname/displayName
           const data = userDoc.data();
-          let activeNickname = data?.nickname || data?.displayName || 'Nexus Explorer';
-          if (containsProfanity(activeNickname)) {
-            activeNickname = 'Nexus Explorer';
+          let activeNickname = data?.nickname || '';
+          
+          if (!activeNickname || activeNickname.toLowerCase().includes('sarsero') || containsProfanity(activeNickname)) {
+            const savedLocal = localStorage.getItem('username');
+            if (savedLocal && !containsProfanity(savedLocal) && !savedLocal.toLowerCase().includes('sarsero')) {
+              activeNickname = savedLocal.trim();
+            } else {
+              activeNickname = 'tnm17';
+            }
           }
+
           localStorage.setItem('username', activeNickname);
 
           const updates: any = {};
@@ -185,12 +192,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProfile = async (data: Partial<UserProfile>) => {
-    if (data.nickname) {
-      localStorage.setItem('username', data.nickname);
+    let chosenName = data.nickname || data.displayName || profile?.nickname || localStorage.getItem('username') || 'tnm17';
+    if (chosenName.toLowerCase().includes('sarsero') || containsProfanity(chosenName)) {
+      chosenName = 'tnm17';
     }
+
+    localStorage.setItem('username', chosenName);
+
+    // Update local React state optimistically so UI updates immediately across all screens
+    setProfile(prev => prev ? {
+      ...prev,
+      ...data,
+      nickname: chosenName,
+      displayName: chosenName
+    } : {
+      uid: user?.uid || 'temp',
+      email: user?.email || undefined,
+      nickname: chosenName,
+      displayName: chosenName,
+      photoURL: user?.photoURL || undefined,
+      favorites: []
+    });
+
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
-    const chosenName = data.nickname || data.displayName || profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'Nexus Explorer';
 
     await setDoc(userRef, {
       uid: user.uid,
