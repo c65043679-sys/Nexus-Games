@@ -294,23 +294,22 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const [activeToast, setActiveToast] = useState<ToastNotification | null>(null);
   const isRemoteLoaded = useRef<boolean>(false);
+  const lastConfettiTime = useRef<number>(0);
 
-  // Sync with Firestore if logged in; clear state when logged out
+  const unlockedRef = useRef(unlocked);
+  useEffect(() => {
+    unlockedRef.current = unlocked;
+  }, [unlocked]);
+
+  const progressDataRef = useRef(progressData);
+  useEffect(() => {
+    progressDataRef.current = progressData;
+  }, [progressData]);
+
+  // Sync with Firestore if logged in
   useEffect(() => {
     if (!user) {
-      isRemoteLoaded.current = false;
-      setUnlocked({});
-      setProgressData({});
-      setGamePoints(0);
-      setGamesPlayed(0);
-      try {
-        localStorage.removeItem('nexus_achievements');
-        localStorage.removeItem('nexus_achievements_progress');
-        localStorage.removeItem('nexus_game_points');
-        localStorage.removeItem('nexus_games_played');
-      } catch (e) {
-        console.error(e);
-      }
+      isRemoteLoaded.current = true;
       return;
     }
 
@@ -320,15 +319,19 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const unsub = onSnapshot(doc(db, 'users', user.uid, 'data', 'achievements'), (snap) => {
         if (snap.exists()) {
           const remoteData = snap.data();
-          setUnlocked(remoteData.unlocked || {});
-          setProgressData(remoteData.progress || {});
-          setGamePoints(typeof remoteData.gamePoints === 'number' ? remoteData.gamePoints : 0);
-          setGamesPlayed(typeof remoteData.gamesPlayed === 'number' ? remoteData.gamesPlayed : 0);
-        } else {
-          setUnlocked({});
-          setProgressData({});
-          setGamePoints(0);
-          setGamesPlayed(0);
+          const remoteUnlocked = remoteData.unlocked || {};
+          const remoteProgress = remoteData.progress || {};
+
+          // Merge local and remote unlocked achievements so nothing gets wiped
+          const mergedUnlocked = { ...remoteUnlocked, ...unlockedRef.current };
+          const mergedProgress = { ...remoteProgress, ...progressDataRef.current };
+          const maxGamePoints = Math.max(typeof remoteData.gamePoints === 'number' ? remoteData.gamePoints : 0, parseInt(localStorage.getItem('nexus_game_points') || '0', 10));
+          const maxGamesPlayed = Math.max(typeof remoteData.gamesPlayed === 'number' ? remoteData.gamesPlayed : 0, parseInt(localStorage.getItem('nexus_games_played') || '0', 10));
+
+          setUnlocked(mergedUnlocked);
+          setProgressData(mergedProgress);
+          setGamePoints(maxGamePoints);
+          setGamesPlayed(maxGamesPlayed);
         }
         isRemoteLoaded.current = true;
       }, (err) => {
@@ -338,7 +341,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       return () => {
         unsub();
-        isRemoteLoaded.current = false;
+        isRemoteLoaded.current = true;
       };
     } catch (e) {
       console.error(e);
@@ -346,10 +349,8 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [user]);
 
-  // Persist locally for active user
+  // Persist locally and remotely
   useEffect(() => {
-    if (!user || !isRemoteLoaded.current) return;
-
     try {
       localStorage.setItem('nexus_achievements', JSON.stringify(unlocked));
       localStorage.setItem('nexus_achievements_progress', JSON.stringify(progressData));
@@ -359,7 +360,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.error(e);
     }
 
-    if (user) {
+    if (user && isRemoteLoaded.current) {
       const currentXp = Object.keys(unlocked).reduce((acc, id) => {
         const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
         return acc + (ach ? ach.xp : 0);
@@ -374,7 +375,9 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         gamePoints,
         gamesPlayed,
         updatedAt: new Date().toISOString()
-      }, { merge: true }).catch(() => {});
+      }, { merge: true }).catch((err) => {
+        console.warn('Error saving remote achievements:', err);
+      });
 
       let activeName = profile?.nickname || localStorage.getItem('username') || 'Nexus Explorer';
       if (containsProfanity(activeName) || activeName.toLowerCase().includes('sarsero')) {
@@ -424,36 +427,44 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setActiveToast({ id: Date.now().toString(), achievement: ach });
     soundManager.playLevelUp(settings.uiSoundEffects);
 
-    // Confetti burst
-    try {
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.1, x: 0.9 },
-        zIndex: 99999
-      });
-    } catch (e) {
-      console.error(e);
+    // Throttle confetti bursts to prevent lag from multiple unlocks
+    const now = Date.now();
+    if (now - lastConfettiTime.current > 2500) {
+      lastConfettiTime.current = now;
+      try {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.1, x: 0.9 },
+          zIndex: 99999
+        });
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     setTimeout(() => {
       setActiveToast(null);
-    }, 5000);
+    }, 4000);
   }, [settings.uiSoundEffects]);
 
-  const unlockAchievement = useCallback((id: string) => {
-    if (unlocked[id]) return; // already unlocked
+  const unlockAchievement = useCallback((id: string, silent: boolean = false) => {
+    if (unlockedRef.current[id]) return; // already unlocked
 
     const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
     if (!ach) return;
 
     const updated = {
-      ...unlocked,
+      ...unlockedRef.current,
       [id]: { unlockedAt: Date.now() }
     };
+    unlockedRef.current = updated;
     setUnlocked(updated);
-    triggerToast(ach);
-  }, [unlocked, triggerToast]);
+
+    if (!silent) {
+      triggerToast(ach);
+    }
+  }, [triggerToast]);
 
   const unlockAllAchievements = useCallback(() => {
     const allUnlocked: Record<string, UnlockedAchievementData> = {};
@@ -521,7 +532,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [user]);
 
   const incrementProgress = useCallback((id: string, amount: number = 1) => {
-    if (unlocked[id]) return;
+    if (unlockedRef.current[id]) return;
 
     const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
     if (!ach || !ach.maxProgress) {
@@ -529,14 +540,15 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return;
     }
 
-    const current = (progressData[id] || 0) + amount;
-    const updatedProgress = { ...progressData, [id]: current };
+    const current = (progressDataRef.current[id] || 0) + amount;
+    const updatedProgress = { ...progressDataRef.current, [id]: current };
+    progressDataRef.current = updatedProgress;
     setProgressData(updatedProgress);
 
     if (current >= ach.maxProgress) {
       unlockAchievement(id);
     }
-  }, [unlocked, progressData, unlockAchievement]);
+  }, [unlockAchievement]);
 
   const isUnlocked = useCallback((id: string) => !!unlocked[id], [unlocked]);
   const getProgress = useCallback((id: string) => progressData[id] || 0, [progressData]);

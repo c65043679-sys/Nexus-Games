@@ -23,11 +23,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (user) {
-      toggleFavorite(game.id);
-    } else {
-      // Potentially show a login prompt? For now, do nothing or user might be confused
-    }
+    toggleFavorite(game.id);
   };
 
   return (
@@ -42,11 +38,12 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
     >
       <button 
         onClick={handleFavoriteClick}
+        title={isFavorited ? "Remove from Favorites" : "Add to Favorites"}
         className={`absolute top-2 right-2 z-10 p-2 rounded-full backdrop-blur-md transition-all border ${
           isFavorited 
             ? 'bg-rose-500/20 border-rose-500/50 text-rose-500 scale-110 shadow-lg shadow-rose-500/20' 
             : 'bg-black/20 border-white/10 text-white/50 hover:text-white hover:bg-black/40'
-        } ${!user && 'hidden'}`}
+        }`}
       >
         <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
       </button>

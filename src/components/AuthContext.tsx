@@ -73,6 +73,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const autoGamerTag = generateGamerTag(user.uid, isUserOwner, user.email);
         localStorage.setItem('username', autoGamerTag);
 
+        let localFavs: string[] = [];
+        try {
+          const saved = localStorage.getItem('nexus_favorites');
+          if (saved) localFavs = JSON.parse(saved);
+        } catch (e) {}
+
         // Immediately set initial profile in state so user account loads without blocking
         setProfile({
           uid: user.uid,
@@ -80,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           nickname: autoGamerTag,
           email: user.email,
           photoURL: user.photoURL,
-          favorites: []
+          favorites: localFavs
         });
 
         try {
@@ -126,7 +132,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else {
         setUser(null);
-        setProfile(null);
+        let guestFavs: string[] = [];
+        try {
+          const saved = localStorage.getItem('nexus_favorites');
+          if (saved) guestFavs = JSON.parse(saved);
+        } catch (e) {}
+
+        const guestName = localStorage.getItem('username') || 'Nexus Guest';
+        setProfile({
+          uid: 'guest',
+          displayName: guestName,
+          nickname: guestName,
+          favorites: guestFavs
+        });
         if (unsubscribeProfile) {
           unsubscribeProfile();
           unsubscribeProfile = null;
@@ -193,13 +211,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const toggleFavorite = async (gameId: string) => {
-    if (!user) return;
-    const userRef = doc(db, 'users', user.uid);
-    const isFavorited = profile?.favorites?.includes(gameId);
-    
-    await updateDoc(userRef, {
-      favorites: isFavorited ? arrayRemove(gameId) : arrayUnion(gameId)
+    const currentFavs = profile?.favorites || [];
+    const isFavorited = currentFavs.includes(gameId);
+    const updatedFavs = isFavorited
+      ? currentFavs.filter(id => id !== gameId)
+      : [...currentFavs, gameId];
+
+    // Optimistically update React profile state immediately
+    setProfile(prev => prev ? {
+      ...prev,
+      favorites: updatedFavs
+    } : {
+      uid: user?.uid || 'guest',
+      favorites: updatedFavs
     });
+
+    // Save to local storage for instant persistence
+    try {
+      localStorage.setItem('nexus_favorites', JSON.stringify(updatedFavs));
+    } catch (e) {
+      console.warn('LocalStorage favorites error:', e);
+    }
+
+    if (!user) return;
+
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, {
+        favorites: updatedFavs,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      console.error("Error toggling favorite in Firestore:", err);
+    }
   };
 
   const updateProfile = async (data: Partial<UserProfile>) => {
