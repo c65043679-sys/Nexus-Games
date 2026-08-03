@@ -293,7 +293,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   });
 
   const [activeToast, setActiveToast] = useState<ToastNotification | null>(null);
-  const isRemoteLoaded = useRef<boolean>(false);
+  const [isRemoteLoaded, setIsRemoteLoaded] = useState<boolean>(false);
   const lastConfettiTime = useRef<number>(0);
 
   const unlockedRef = useRef(unlocked);
@@ -309,11 +309,11 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Sync with Firestore if logged in
   useEffect(() => {
     if (!user) {
-      isRemoteLoaded.current = true;
+      setIsRemoteLoaded(true);
       return;
     }
 
-    isRemoteLoaded.current = false;
+    setIsRemoteLoaded(false);
 
     try {
       const unsub = onSnapshot(doc(db, 'users', user.uid, 'data', 'achievements'), (snap) => {
@@ -333,19 +333,19 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
           setGamePoints(maxGamePoints);
           setGamesPlayed(maxGamesPlayed);
         }
-        isRemoteLoaded.current = true;
+        setIsRemoteLoaded(true);
       }, (err) => {
         console.warn('Achievements sync offline', err);
-        isRemoteLoaded.current = true;
+        setIsRemoteLoaded(true);
       });
 
       return () => {
         unsub();
-        isRemoteLoaded.current = true;
+        setIsRemoteLoaded(true);
       };
     } catch (e) {
       console.error(e);
-      isRemoteLoaded.current = true;
+      setIsRemoteLoaded(true);
     }
   }, [user]);
 
@@ -360,7 +360,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.error(e);
     }
 
-    if (user && isRemoteLoaded.current) {
+    if (user && isRemoteLoaded) {
       const currentXp = Object.keys(unlocked).reduce((acc, id) => {
         const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
         return acc + (ach ? ach.xp : 0);
@@ -379,7 +379,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         console.warn('Error saving remote achievements:', err);
       });
 
-      let activeName = profile?.nickname || localStorage.getItem('username') || 'Nexus Explorer';
+      let activeName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'Nexus Explorer';
       if (containsProfanity(activeName) || activeName.toLowerCase().includes('sarsero')) {
         activeName = 'Nexus Explorer';
       }
@@ -399,9 +399,11 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         updatedAt: new Date().toISOString()
       };
 
-      setDoc(doc(db, 'users', user.uid), userDocData, { merge: true }).catch(() => {});
+      setDoc(doc(db, 'users', user.uid), userDocData, { merge: true }).catch((err) => {
+        console.warn('Error updating user leaderboard doc:', err);
+      });
     }
-  }, [unlocked, progressData, gamePoints, gamesPlayed, user, profile]);
+  }, [unlocked, progressData, gamePoints, gamesPlayed, user, profile, isRemoteLoaded]);
 
   // Calculate XP and Level
   const totalXp = Object.keys(unlocked).reduce((acc, id) => {

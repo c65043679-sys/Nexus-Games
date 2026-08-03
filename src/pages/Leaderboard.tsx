@@ -69,9 +69,9 @@ export const Leaderboard: React.FC = () => {
           const pGp = typeof data.gamePoints === 'number' ? data.gamePoints : (data.gamesPlayed || 0) * 50;
           const pTot = typeof data.totalScore === 'number' ? data.totalScore : (pXp + pGp);
 
-          // Auto-assigned clean GamerTag
+          // GamerTag
           const isPlayerOwner = data.email?.toLowerCase() === 'c65043679@gmail.com' || data.isOwner;
-          const playerDisplayName = generateGamerTag(playerUid, isPlayerOwner, data.email);
+          const playerDisplayName = data.nickname || data.displayName || generateGamerTag(playerUid, isPlayerOwner, data.email);
 
           firestoreList.push({
             uid: playerUid,
