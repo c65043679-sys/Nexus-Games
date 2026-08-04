@@ -208,12 +208,7 @@ export const AvatarDisplay: React.FC<AvatarDisplayProps> = ({
         />
       </div>
 
-      {/* Special Sovereign Badge Overlay */}
-      {avatar.id === 'sovereign_crown' && (
-        <div className={`absolute top-0.5 right-0.5 bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 font-black rounded-md shadow-lg border border-amber-200 z-30 flex items-center justify-center p-0.5`}>
-          <Crown className="w-3 h-3 fill-slate-950 text-slate-950" />
-        </div>
-      )}
+
     </div>
   );
 };
