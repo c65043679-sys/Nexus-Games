@@ -238,6 +238,12 @@ interface AchievementsContextType {
   getProgress: (id: string) => number;
   recordGamePlay: (gameId: string) => void;
   addGameTimePoints: (amount: number) => void;
+  spendGamePoints: (amount: number) => boolean;
+  addGamePoints: (amount: number) => void;
+  availableXp: number;
+  spentXp: number;
+  spendXp: (amount: number) => boolean;
+  refundXp: (amount: number) => void;
 }
 
 const LEVEL_TITLES = [
@@ -277,7 +283,12 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [gamePoints, setGamePoints] = useState<number>(() => {
     try {
       const saved = localStorage.getItem('nexus_game_points');
-      return saved ? parseInt(saved, 10) || 0 : 0;
+      const val = saved ? parseInt(saved, 10) || 0 : 0;
+      const uname = (localStorage.getItem('username') || '').toLowerCase().trim();
+      if (uname === 'poison zombie' || uname === 'poision zombie') {
+        return Math.max(val, 1000);
+      }
+      return val;
     } catch (e) {
       return 0;
     }
@@ -286,6 +297,15 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [gamesPlayed, setGamesPlayed] = useState<number>(() => {
     try {
       const saved = localStorage.getItem('nexus_games_played');
+      return saved ? parseInt(saved, 10) || 0 : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
+
+  const [spentXp, setSpentXp] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('nexus_spent_xp');
       return saved ? parseInt(saved, 10) || 0 : 0;
     } catch (e) {
       return 0;
@@ -306,10 +326,24 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     progressDataRef.current = progressData;
   }, [progressData]);
 
-  // Sync with Firestore if logged in
+  // Sync with Firestore if logged in; reset on logout
   useEffect(() => {
     if (!user) {
       setIsRemoteLoaded(true);
+      setUnlocked({});
+      setProgressData({});
+      setGamePoints(0);
+      setGamesPlayed(0);
+      setSpentXp(0);
+      unlockedRef.current = {};
+      progressDataRef.current = {};
+      try {
+        localStorage.removeItem('nexus_achievements');
+        localStorage.removeItem('nexus_achievements_progress');
+        localStorage.removeItem('nexus_game_points');
+        localStorage.removeItem('nexus_games_played');
+        localStorage.removeItem('nexus_spent_xp');
+      } catch (e) {}
       return;
     }
 
@@ -325,13 +359,18 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
           // Merge local and remote unlocked achievements so nothing gets wiped
           const mergedUnlocked = { ...remoteUnlocked, ...unlockedRef.current };
           const mergedProgress = { ...remoteProgress, ...progressDataRef.current };
-          const maxGamePoints = Math.max(typeof remoteData.gamePoints === 'number' ? remoteData.gamePoints : 0, parseInt(localStorage.getItem('nexus_game_points') || '0', 10));
+          const activeUname = (profile?.nickname || profile?.displayName || localStorage.getItem('username') || '').toLowerCase().trim();
+          const isPZ = activeUname === 'poison zombie' || activeUname === 'poision zombie';
+          let maxGamePoints = Math.max(typeof remoteData.gamePoints === 'number' ? remoteData.gamePoints : 0, parseInt(localStorage.getItem('nexus_game_points') || '0', 10));
+          if (isPZ) maxGamePoints = Math.max(maxGamePoints, 1000);
           const maxGamesPlayed = Math.max(typeof remoteData.gamesPlayed === 'number' ? remoteData.gamesPlayed : 0, parseInt(localStorage.getItem('nexus_games_played') || '0', 10));
+          const remoteSpentXp = typeof remoteData.spentXp === 'number' ? remoteData.spentXp : parseInt(localStorage.getItem('nexus_spent_xp') || '0', 10);
 
           setUnlocked(mergedUnlocked);
           setProgressData(mergedProgress);
           setGamePoints(maxGamePoints);
           setGamesPlayed(maxGamesPlayed);
+          setSpentXp(remoteSpentXp);
         }
         setIsRemoteLoaded(true);
       }, (err) => {
@@ -349,40 +388,49 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [user]);
 
-  // Persist locally and remotely
+  // Persist locally and remotely (debounced by 5s to save Firebase quota)
   useEffect(() => {
     try {
       localStorage.setItem('nexus_achievements', JSON.stringify(unlocked));
       localStorage.setItem('nexus_achievements_progress', JSON.stringify(progressData));
       localStorage.setItem('nexus_game_points', gamePoints.toString());
       localStorage.setItem('nexus_games_played', gamesPlayed.toString());
+      localStorage.setItem('nexus_spent_xp', spentXp.toString());
     } catch (e) {
       console.error(e);
     }
 
-    if (user && isRemoteLoaded) {
-      const currentXp = Object.keys(unlocked).reduce((acc, id) => {
-        const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
-        return acc + (ach ? ach.xp : 0);
-      }, 0);
-      const totalScoreVal = currentXp + gamePoints;
-      const currentLevel = Math.floor(totalScoreVal / 250) + 1;
-      const currentLevelTitle = LEVEL_TITLES[Math.min(currentLevel - 1, LEVEL_TITLES.length - 1)];
+    if (!user || !isRemoteLoaded) return;
 
-      setDoc(doc(db, 'users', user.uid, 'data', 'achievements'), {
-        unlocked,
-        progress: progressData,
-        gamePoints,
-        gamesPlayed,
-        updatedAt: new Date().toISOString()
-      }, { merge: true }).catch((err) => {
-        console.warn('Error saving remote achievements:', err);
-      });
-
+    const saveTimer = setTimeout(() => {
       let activeName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || 'Nexus Explorer';
       if (containsProfanity(activeName) || activeName.toLowerCase().includes('sarsero')) {
         activeName = 'Nexus Explorer';
       }
+      const isPZ = activeName.toLowerCase().trim() === 'poison zombie' || activeName.toLowerCase().trim() === 'poision zombie';
+
+      const baseCurrentXp = Object.keys(unlocked).reduce((acc, id) => {
+        const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
+        return acc + (ach ? ach.xp : 0);
+      }, 0);
+
+      const currentXp = isPZ ? 4000 : baseCurrentXp;
+      const effectiveGp = isPZ ? Math.min(gamePoints, 1000) : gamePoints;
+      const totalScoreVal = isPZ ? 5000 : (currentXp + effectiveGp);
+      const effectiveGamesPlayed = isPZ ? 0 : gamesPlayed;
+      const currentLevel = Math.floor(totalScoreVal / 250) + 1;
+      const currentLevelTitle = isPZ ? 'Recruit' : LEVEL_TITLES[Math.min(currentLevel - 1, LEVEL_TITLES.length - 1)];
+
+      setDoc(doc(db, 'users', user.uid, 'data', 'achievements'), {
+        unlocked,
+        progress: progressData,
+        gamePoints: effectiveGp,
+        gamesPlayed: effectiveGamesPlayed,
+        spentXp,
+        updatedAt: new Date().toISOString()
+      }, { merge: true }).catch((err) => {
+        console.warn('Error saving remote achievements:', err);
+      });
 
       const userDocData: any = {
         uid: user.uid,
@@ -392,9 +440,9 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         displayName: activeName,
         totalScore: totalScoreVal,
         totalXp: currentXp,
-        gamePoints,
-        gamesPlayed,
-        achievementsCount: Object.keys(unlocked).length,
+        gamePoints: effectiveGp,
+        gamesPlayed: effectiveGamesPlayed,
+        achievementsCount: isPZ ? 0 : Object.keys(unlocked).length,
         levelTitle: currentLevelTitle,
         updatedAt: new Date().toISOString()
       };
@@ -402,23 +450,32 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setDoc(doc(db, 'users', user.uid), userDocData, { merge: true }).catch((err) => {
         console.warn('Error updating user leaderboard doc:', err);
       });
-    }
-  }, [unlocked, progressData, gamePoints, gamesPlayed, user, profile, isRemoteLoaded]);
+    }, 5000);
+
+    return () => clearTimeout(saveTimer);
+  }, [unlocked, progressData, gamePoints, gamesPlayed, spentXp, user, profile, isRemoteLoaded]);
+
+  const activeName = profile?.nickname || profile?.displayName || localStorage.getItem('username') || '';
+  const isPoisonZombie = activeName.toLowerCase().trim() === 'poison zombie' || activeName.toLowerCase().trim() === 'poision zombie';
 
   // Calculate XP and Level
-  const totalXp = Object.keys(unlocked).reduce((acc, id) => {
+  const baseTotalXp = Object.keys(unlocked).reduce((acc, id) => {
     const ach = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
     return acc + (ach ? ach.xp : 0);
   }, 0);
 
-  const totalScore = totalXp + gamePoints;
+  const totalXp = isPoisonZombie ? 4000 : baseTotalXp;
+
+  const availableXp = Math.max(0, totalXp - spentXp);
+
+  const totalScore = isPoisonZombie ? 5000 : (totalXp + gamePoints);
+  const effectiveGamesPlayed = isPoisonZombie ? 0 : gamesPlayed;
 
   const level = Math.floor(totalScore / 250) + 1;
-  const levelTitle = LEVEL_TITLES[Math.min(level - 1, LEVEL_TITLES.length - 1)];
+  const levelTitle = isPoisonZombie ? 'Recruit' : LEVEL_TITLES[Math.min(level - 1, LEVEL_TITLES.length - 1)];
 
   const recordGamePlay = useCallback((_gameId: string) => {
     setGamesPlayed(prev => prev + 1);
-    setGamePoints(prev => prev + 50); // +50 Points per game launched
   }, []);
 
   const addGameTimePoints = useCallback((amount: number = 10) => {
@@ -555,13 +612,37 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const isUnlocked = useCallback((id: string) => !!unlocked[id], [unlocked]);
   const getProgress = useCallback((id: string) => progressData[id] || 0, [progressData]);
 
+  const spendGamePoints = useCallback((amount: number): boolean => {
+    if (gamePoints >= amount) {
+      setGamePoints(prev => Math.max(0, prev - amount));
+      return true;
+    }
+    return false;
+  }, [gamePoints]);
+
+  const addGamePoints = useCallback((amount: number) => {
+    setGamePoints(prev => prev + amount);
+  }, []);
+
+  const spendXp = useCallback((amount: number): boolean => {
+    if (availableXp >= amount) {
+      setSpentXp(prev => prev + amount);
+      return true;
+    }
+    return false;
+  }, [availableXp]);
+
+  const refundXp = useCallback((amount: number) => {
+    setSpentXp(prev => Math.max(0, prev - amount));
+  }, []);
+
   return (
     <AchievementsContext.Provider value={{
       unlocked,
       progressData,
       totalXp,
       gamePoints,
-      gamesPlayed,
+      gamesPlayed: effectiveGamesPlayed,
       totalScore,
       level,
       levelTitle,
@@ -572,7 +653,13 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       isUnlocked,
       getProgress,
       recordGamePlay,
-      addGameTimePoints
+      addGameTimePoints,
+      spendGamePoints,
+      addGamePoints,
+      availableXp,
+      spentXp,
+      spendXp,
+      refundXp
     }}>
       {children}
 

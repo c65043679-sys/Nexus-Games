@@ -49,8 +49,7 @@ export const GlobalEffectsListener: React.FC = () => {
             localStorage.setItem('nexus_godmode_aura', data.godModeAura ? 'true' : 'false');
           }
           if (typeof data.matrixRain === 'boolean') {
-            localStorage.setItem('nexus_matrix_rain', data.matrixRain ? 'true' : 'false');
-            window.dispatchEvent(new CustomEvent('nexus_matrix_toggle', { detail: data.matrixRain }));
+            localStorage.setItem('nexus_matrix_rain', 'false');
           }
         }
       }, (err) => {

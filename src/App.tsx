@@ -13,6 +13,7 @@ import { SettingsProvider, useSettings } from './components/SettingsContext';
 import { AchievementsProvider } from './components/AchievementsContext';
 import { Achievements } from './pages/Achievements';
 import { Leaderboard } from './pages/Leaderboard';
+import { CasesAndInventory } from './pages/CasesAndInventory';
 import { FpsCounter } from './components/FpsCounter';
 import { PanicOverlay } from './components/PanicOverlay';
 import { BroadcastBanner } from './components/BroadcastBanner';
@@ -70,6 +71,7 @@ function AppContent() {
                   } 
                 />
                 <Route path="/play/:id" element={<Play />} />
+                <Route path="/cases" element={<CasesAndInventory />} />
                 <Route path="/achievements" element={<Achievements />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/settings" element={<Settings />} />

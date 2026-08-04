@@ -1,8 +1,9 @@
 import React from 'react';
-import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, Skull, Trophy, Star, Settings, Lock, Unlock, History, PlusCircle, Crown, BarChart3, Medal } from 'lucide-react';
+import { LayoutGrid, Flame, Car, Gamepad, Puzzle, User as UserIcon, LogIn, LogOut, Skull, Trophy, Star, Settings, Lock, Unlock, History, PlusCircle, Crown, BarChart3, Medal, Package } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Category } from '../types';
 import { useAuth } from './AuthContext';
+import { AvatarDisplay } from './AvatarDisplay';
 
 interface SidebarProps {
   activeCategory: Category;
@@ -70,6 +71,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
         </Link>
         
         <div className="space-y-2 mt-4">
+          <Link 
+            to="/cases"
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+              location.pathname === '/cases'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold shadow-lg shadow-amber-500/10'
+                : 'text-slate-400 border border-transparent hover:text-amber-300 hover:bg-white/5'
+            }`}
+          >
+            <Package className="w-5 h-5 text-amber-400 animate-pulse" />
+            <span className="text-sm font-bold">Cases & Inventory</span>
+          </Link>
+
           <Link 
             to="/leaderboard"
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
@@ -166,16 +179,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-3 px-1 py-1">
-                <div className="w-10 h-10 rounded-full border border-violet-500/30 overflow-hidden bg-violet-500/10 flex items-center justify-center">
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  ) : (
-                    <UserIcon className="w-5 h-5 text-violet-400" />
-                  )}
-                </div>
+                <AvatarDisplay avatarId={profile?.equippedAvatar} size="md" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white truncate">{profile?.nickname || user.displayName}</p>
-                  <p className="text-[10px] text-slate-500 truncate">Explorer</p>
+                  <p className="text-[10px] text-slate-500 truncate">{isOwner ? 'Nexus Owner' : 'Explorer'}</p>
                 </div>
               </div>
               <button

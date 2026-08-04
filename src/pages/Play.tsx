@@ -91,19 +91,19 @@ export const Play: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!isFullscreen) return;
-
-    const handleFullscreenKeyDown = (e: KeyboardEvent) => {
+    const handleGameKeyDown = (e: KeyboardEvent) => {
       const key = settings.panicKey;
       let isMatch = false;
-      if (key === 'Backquote' && (e.code === 'Backquote' || e.key === '`' || e.key === '~')) isMatch = true;
-      if (key === 'Escape' && (e.code === 'Escape' || e.key === 'Escape')) isMatch = true;
-      if (key === 'AltP' && e.altKey && (e.code === 'KeyP' || e.key === 'p' || e.key === 'P')) isMatch = true;
-      if (key === 'AltZ' && e.altKey && (e.code === 'KeyZ' || e.key === 'z' || e.key === 'Z')) isMatch = true;
+      if (key === 'Backquote' && (e.code === 'Backquote' || e.key === '`' || e.key === '~' || e.keyCode === 192 || e.which === 192)) isMatch = true;
+      if (key === 'Escape' && (e.code === 'Escape' || e.key === 'Escape' || e.keyCode === 27 || e.which === 27)) isMatch = true;
+      if (key === 'AltP' && (e.altKey || e.metaKey) && (e.code === 'KeyP' || e.key === 'p' || e.key === 'P' || e.keyCode === 80 || e.which === 80)) isMatch = true;
+      if (key === 'AltZ' && (e.altKey || e.metaKey) && (e.code === 'KeyZ' || e.key === 'z' || e.key === 'Z' || e.keyCode === 90 || e.which === 90)) isMatch = true;
 
       if (isMatch) {
-        e.preventDefault();
-        e.stopPropagation();
+        try {
+          e.preventDefault();
+          e.stopPropagation();
+        } catch (err) {}
         if (document.fullscreenElement) {
           try { document.exitFullscreen().catch(() => {}); } catch (err) {}
         }
@@ -111,14 +111,33 @@ export const Play: React.FC = () => {
       }
     };
 
-    window.addEventListener('keydown', handleFullscreenKeyDown, true);
-    document.addEventListener('keydown', handleFullscreenKeyDown, true);
+    window.addEventListener('keydown', handleGameKeyDown, true);
+    document.addEventListener('keydown', handleGameKeyDown, true);
+
+    const checkIframe = () => {
+      try {
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.removeEventListener('keydown', handleGameKeyDown, true);
+          iframeRef.current.contentWindow.addEventListener('keydown', handleGameKeyDown, true);
+        }
+        if (iframeRef.current?.contentDocument) {
+          iframeRef.current.contentDocument.removeEventListener('keydown', handleGameKeyDown, true);
+          iframeRef.current.contentDocument.addEventListener('keydown', handleGameKeyDown, true);
+        }
+      } catch (err) {
+        // Cross-origin restriction
+      }
+    };
+
+    checkIframe();
+    const interval = setInterval(checkIframe, 500);
 
     return () => {
-      window.removeEventListener('keydown', handleFullscreenKeyDown, true);
-      document.removeEventListener('keydown', handleFullscreenKeyDown, true);
+      window.removeEventListener('keydown', handleGameKeyDown, true);
+      document.removeEventListener('keydown', handleGameKeyDown, true);
+      clearInterval(interval);
     };
-  }, [isFullscreen, settings.panicKey, triggerPanic]);
+  }, [settings.panicKey, triggerPanic]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -249,6 +268,26 @@ export const Play: React.FC = () => {
           <span className="text-sm font-semibold uppercase tracking-widest text-slate-500">Nexus Core</span>
         </Link>
         <div className="flex items-center gap-3">
+          <button
+            onClick={triggerPanic}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 transition-all shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 group/topPanic"
+            title={`Emergency Panic Redirect (${settings.panicKey})`}
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-red-400 group-hover/topPanic:scale-110 transition-transform" />
+            <span>Panic</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-mono text-red-200 uppercase font-bold">
+              {(() => {
+                switch (settings.panicKey) {
+                  case 'Backquote': return '`';
+                  case 'Escape': return 'Esc';
+                  case 'AltP': return 'Alt+P';
+                  case 'AltZ': return 'Alt+Z';
+                  default: return 'Alt+P';
+                }
+              })()}
+            </span>
+          </button>
+
           <button
             onClick={() => updateSetting('theaterMode', !settings.theaterMode)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
@@ -405,14 +444,19 @@ export const Play: React.FC = () => {
               );
             })()}
             
-            {/* Fullscreen Overlay Controls */}
-            {isFullscreen && (
-              <div 
-                className="absolute top-4 right-4 z-50 flex items-center gap-2.5 opacity-0 group-hover/player:opacity-100 transition-all duration-300 pointer-events-auto"
-                onMouseEnter={() => {
+            {/* Player Container Overlay Controls (Works in both windowed and fullscreen modes) */}
+            <div 
+              className="absolute top-4 right-4 z-50 flex items-center gap-2.5 opacity-0 group-hover/player:opacity-100 transition-all duration-300 pointer-events-auto"
+              onMouseEnter={() => {
+                try { window.focus(); } catch (e) {}
+              }}
+              onMouseMove={() => {
+                if (document.activeElement?.tagName?.toLowerCase() === 'iframe') {
                   try { window.focus(); } catch (e) {}
-                }}
-              >
+                }
+              }}
+            >
+              {isFullscreen && (
                 <button
                   onClick={() => {
                     if (document.fullscreenElement) {
@@ -437,26 +481,16 @@ export const Play: React.FC = () => {
                     })()}
                   </span>
                 </button>
+              )}
 
-                <button 
-                  onClick={toggleFullscreen}
-                  className="p-2 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white text-xs font-medium backdrop-blur-xl shadow-2xl transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95"
-                  title="Exit Fullscreen"
-                >
-                  <Minimize2 className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
-            {!isFullscreen && (
               <button 
                 onClick={toggleFullscreen}
-                className="absolute bottom-6 right-6 p-3 rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:bg-black/80 opacity-0 group-hover/player:opacity-100 transition-all duration-300 transform translate-y-2 group-hover/player:translate-y-0 shadow-lg"
-                title="Toggle Fullscreen"
+                className="p-2 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white text-xs font-medium backdrop-blur-xl shadow-2xl transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
               >
-                <Maximize2 className="w-6 h-6" />
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </button>
-            )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">

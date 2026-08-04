@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../components/AuthContext';
 import { useAchievements } from '../components/AchievementsContext';
+import { AvatarDisplay } from '../components/AvatarDisplay';
 import { db } from '../lib/firebase';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { generateGamerTag } from '../utils/nameGenerator';
@@ -23,6 +24,7 @@ export interface LeaderboardPlayer {
   displayName: string;
   email?: string | null;
   photoURL?: string | null;
+  equippedAvatar?: string;
   totalScore: number;
   gamePoints: number;
   achievementXp: number;
@@ -65,25 +67,55 @@ export const Leaderboard: React.FC = () => {
             return;
           }
 
-          const pXp = typeof data.totalXp === 'number' ? data.totalXp : (data.achievementsCount || 0) * 150;
-          const pGp = typeof data.gamePoints === 'number' ? data.gamePoints : (data.gamesPlayed || 0) * 50;
-          const pTot = typeof data.totalScore === 'number' ? data.totalScore : (pXp + pGp);
-
           // GamerTag
           const isPlayerOwner = data.email?.toLowerCase() === 'c65043679@gmail.com' || data.isOwner;
           const playerDisplayName = data.nickname || data.displayName || generateGamerTag(playerUid, isPlayerOwner, data.email);
+          const isPoisonZombie = playerDisplayName.toLowerCase().trim() === 'poison zombie' || playerDisplayName.toLowerCase().trim() === 'poision zombie';
+
+          let pXp = typeof data.totalXp === 'number' ? data.totalXp : (data.achievementsCount || 0) * 150;
+          let pGp = typeof data.gamePoints === 'number' ? data.gamePoints : 0;
+          let pGamesPlayed = data.gamesPlayed || 0;
+          let pAchCount = data.achievementsCount || 0;
+
+          if (isPoisonZombie) {
+            pXp = 4000;
+            pGp = 1000;
+            pGamesPlayed = 0;
+            pAchCount = 0;
+
+            if (data.totalScore !== 5000 || data.totalXp !== 4000 || data.gamePoints !== 1000 || data.gamesPlayed !== 0) {
+              setDoc(doc(db, 'users', playerUid), {
+                totalScore: 5000,
+                totalXp: 4000,
+                gamePoints: 1000,
+                gamesPlayed: 0,
+                achievementsCount: 0,
+                levelTitle: 'Recruit',
+                updatedAt: new Date().toISOString()
+              }, { merge: true }).catch(() => {});
+
+              setDoc(doc(db, 'users', playerUid, 'data', 'achievements'), {
+                gamePoints: 1000,
+                gamesPlayed: 0,
+                updatedAt: new Date().toISOString()
+              }, { merge: true }).catch(() => {});
+            }
+          }
+
+          const pTot = isPoisonZombie ? 5000 : (pXp + pGp);
 
           firestoreList.push({
             uid: playerUid,
             displayName: playerDisplayName,
             email: data.email,
             photoURL: data.photoURL,
+            equippedAvatar: data.equippedAvatar || 'initiate_core',
             totalScore: pTot,
             gamePoints: pGp,
             achievementXp: pXp,
-            gamesPlayed: data.gamesPlayed || 0,
-            achievementsCount: data.achievementsCount || 0,
-            title: data.levelTitle || 'Nexus Explorer',
+            gamesPlayed: pGamesPlayed,
+            achievementsCount: pAchCount,
+            title: isPoisonZombie ? 'Recruit' : (data.levelTitle || 'Nexus Explorer'),
             avatarBg: 'bg-gradient-to-br from-indigo-500 to-purple-600',
             isCurrentUser: user?.uid === playerUid
           });
@@ -100,19 +132,25 @@ export const Leaderboard: React.FC = () => {
           const currentName = generateGamerTag(currentUid, isCurrentOwner, user?.email);
           localStorage.setItem('username', currentName);
 
-          const unlockedCount = Object.keys(unlocked).length;
+          const isCurrentPZ = currentName.toLowerCase().trim() === 'poison zombie' || currentName.toLowerCase().trim() === 'poision zombie';
+          const unlockedCount = isCurrentPZ ? 0 : Object.keys(unlocked).length;
+          const activeTot = isCurrentPZ ? 5000 : totalScore;
+          const activeGp = isCurrentPZ ? 1000 : gamePoints;
+          const activeXp = isCurrentPZ ? 4000 : totalXp;
+          const activeGpCount = isCurrentPZ ? 0 : gamesPlayed;
 
           realMap.set(currentUid, {
             uid: currentUid,
             displayName: currentName,
             email: user?.email,
             photoURL: user?.photoURL || localStorage.getItem('userpic'),
-            totalScore: totalScore,
-            gamePoints: gamePoints,
-            achievementXp: totalXp,
-            gamesPlayed: gamesPlayed,
+            equippedAvatar: profile?.equippedAvatar || 'initiate_core',
+            totalScore: activeTot,
+            gamePoints: activeGp,
+            achievementXp: activeXp,
+            gamesPlayed: activeGpCount,
             achievementsCount: unlockedCount,
-            title: levelTitle,
+            title: isCurrentPZ ? 'Recruit' : levelTitle,
             avatarBg: 'bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600',
             isCurrentUser: true
           });
@@ -208,17 +246,7 @@ export const Leaderboard: React.FC = () => {
         </div>
 
         {/* Scoring Guide Info */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
-          <div className="bg-slate-950/50 border border-white/5 p-3 rounded-xl flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0 font-bold">
-              <Gamepad2 className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-slate-200 font-bold">+50 Points</p>
-              <p className="text-[11px] text-slate-400">Per game launched & played</p>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
           <div className="bg-slate-950/50 border border-white/5 p-3 rounded-xl flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 font-bold">
               <Zap className="w-4 h-4" />
@@ -250,14 +278,8 @@ export const Leaderboard: React.FC = () => {
               <div className="absolute -top-3.5 px-3 py-1 bg-slate-400 text-slate-950 font-black text-[10px] uppercase font-mono rounded-full tracking-wider shadow-md flex items-center gap-1">
                 <Medal className="w-3 h-3" /> RANK #2
               </div>
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 p-0.5 mt-2 shadow-lg">
-                <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
-                  {topThree[1].photoURL ? (
-                    <img src={topThree[1].photoURL} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    topThree[1].displayName.charAt(0).toUpperCase()
-                  )}
-                </div>
+              <div className="pt-2">
+                <AvatarDisplay avatarId={topThree[1].equippedAvatar} size="lg" />
               </div>
               <div>
                 <h3 className="font-bold text-white text-base flex items-center justify-center gap-1">
@@ -279,14 +301,8 @@ export const Leaderboard: React.FC = () => {
               <div className="absolute -top-4 px-4 py-1.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black text-xs uppercase font-mono rounded-full tracking-wider shadow-lg shadow-amber-500/30 flex items-center gap-1.5">
                 <Crown className="w-4 h-4 fill-black" /> CHAMPION #1
               </div>
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 p-1 mt-2 shadow-xl shadow-amber-500/20">
-                <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-amber-300 font-black text-2xl overflow-hidden">
-                  {topThree[0].photoURL ? (
-                    <img src={topThree[0].photoURL} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    topThree[0].displayName.charAt(0).toUpperCase()
-                  )}
-                </div>
+              <div className="pt-3">
+                <AvatarDisplay avatarId={topThree[0].equippedAvatar} size="xl" showGlow={true} />
               </div>
               <div>
                 <h3 className="font-black text-white text-lg flex items-center justify-center gap-1.5">
@@ -308,14 +324,8 @@ export const Leaderboard: React.FC = () => {
               <div className="absolute -top-3.5 px-3 py-1 bg-amber-700 text-amber-100 font-black text-[10px] uppercase font-mono rounded-full tracking-wider shadow-md flex items-center gap-1">
                 <Medal className="w-3 h-3" /> RANK #3
               </div>
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 p-0.5 mt-2 shadow-lg">
-                <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-amber-400 font-bold text-lg overflow-hidden">
-                  {topThree[2].photoURL ? (
-                    <img src={topThree[2].photoURL} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    topThree[2].displayName.charAt(0).toUpperCase()
-                  )}
-                </div>
+              <div className="pt-2">
+                <AvatarDisplay avatarId={topThree[2].equippedAvatar} size="lg" />
               </div>
               <div>
                 <h3 className="font-bold text-white text-base flex items-center justify-center gap-1">
@@ -428,13 +438,7 @@ export const Leaderboard: React.FC = () => {
 
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg ${player.avatarBg} flex items-center justify-center text-white font-bold shrink-0 overflow-hidden text-xs`}>
-                            {player.photoURL ? (
-                              <img src={player.photoURL} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              player.displayName.charAt(0).toUpperCase()
-                            )}
-                          </div>
+                          <AvatarDisplay avatarId={player.equippedAvatar} size="sm" />
                           <div>
                             <div className="flex items-center gap-1.5 font-bold text-white">
                               <span>{player.displayName}</span>

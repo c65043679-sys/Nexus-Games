@@ -12,6 +12,8 @@ interface UserProfile {
   photoURL: string | null;
   nickname?: string;
   themeColor?: string;
+  equippedAvatar?: string;
+  unlockedAvatars?: string[];
   favorites: string[];
 }
 
@@ -27,6 +29,9 @@ interface AuthContextType {
   unlockOwner: (passcode: string) => boolean;
   toggleFavorite: (gameId: string) => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
+  equipAvatar: (avatarId: string) => Promise<void>;
+  unlockAvatar: (avatarId: string) => Promise<void>;
+  lockAvatar: (avatarId: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
 
@@ -74,9 +79,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('username', autoGamerTag);
 
         let localFavs: string[] = [];
+        let localUnlocked: string[] = ['initiate_core', 'og_explorer', 'beta_tester'];
+        let localEquipped = isUserOwner ? 'sovereign_crown' : 'initiate_core';
+
+        if (isUserOwner) {
+          localUnlocked.push('sovereign_crown');
+        }
+
         try {
-          const saved = localStorage.getItem('nexus_favorites');
-          if (saved) localFavs = JSON.parse(saved);
+          const savedFavs = localStorage.getItem('nexus_favorites');
+          if (savedFavs) localFavs = JSON.parse(savedFavs);
+          const savedUnlocked = localStorage.getItem('nexus_unlocked_avatars');
+          if (savedUnlocked) {
+            const parsed = JSON.parse(savedUnlocked);
+            localUnlocked = Array.from(new Set([...localUnlocked, ...parsed]));
+          }
+          const savedEquipped = localStorage.getItem('nexus_equipped_avatar');
+          if (savedEquipped) localEquipped = savedEquipped;
         } catch (e) {}
 
         // Immediately set initial profile in state so user account loads without blocking
@@ -86,6 +105,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           nickname: autoGamerTag,
           email: user.email,
           photoURL: user.photoURL,
+          equippedAvatar: localEquipped,
+          unlockedAvatars: localUnlocked,
           favorites: localFavs
         });
 
@@ -100,6 +121,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               nickname: autoGamerTag,
               email: user.email,
               photoURL: user.photoURL,
+              equippedAvatar: localEquipped,
+              unlockedAvatars: localUnlocked,
               favorites: [],
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
@@ -112,6 +135,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               updates.nickname = autoGamerTag;
               updates.displayName = autoGamerTag;
             }
+            // Ensure mandatory OG / Beta / Sovereign avatars are present
+            const docUnlocked: string[] = data?.unlockedAvatars || ['initiate_core'];
+            const mergedUnlocked = Array.from(new Set([...docUnlocked, 'initiate_core', 'og_explorer', 'beta_tester', ...(isUserOwner ? ['sovereign_crown'] : [])]));
+            if (mergedUnlocked.length !== docUnlocked.length) {
+              updates.unlockedAvatars = mergedUnlocked;
+            }
+            if (!data?.equippedAvatar) {
+              updates.equippedAvatar = isUserOwner ? 'sovereign_crown' : 'initiate_core';
+            }
             if (!data?.favorites) updates.favorites = [];
             if (!data?.uid) updates.uid = user.uid;
             if (Object.keys(updates).length > 0) {
@@ -122,7 +154,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Listen to profile changes
           unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
             if (docSnap.exists()) {
-              setProfile(docSnap.data() as UserProfile);
+              const snapData = docSnap.data();
+              const baseUnlocked = ['initiate_core', 'og_explorer', 'beta_tester', ...(isUserOwner ? ['sovereign_crown'] : [])];
+              const finalUnlocked = Array.from(new Set([...baseUnlocked, ...(snapData.unlockedAvatars || [])]));
+              setProfile({
+                ...snapData,
+                unlockedAvatars: finalUnlocked,
+                equippedAvatar: snapData.equippedAvatar || (isUserOwner ? 'sovereign_crown' : 'initiate_core')
+              } as UserProfile);
             }
           }, (err) => {
             console.warn("User profile snapshot warning:", err);
@@ -133,9 +172,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setUser(null);
         let guestFavs: string[] = [];
+        let guestUnlocked: string[] = ['initiate_core', 'og_explorer', 'beta_tester'];
+        if (isOwnerUnlocked) guestUnlocked.push('sovereign_crown');
+        let guestEquipped = isOwnerUnlocked ? 'sovereign_crown' : 'initiate_core';
+
         try {
-          const saved = localStorage.getItem('nexus_favorites');
-          if (saved) guestFavs = JSON.parse(saved);
+          const savedFavs = localStorage.getItem('nexus_favorites');
+          if (savedFavs) guestFavs = JSON.parse(savedFavs);
+          const savedUnlocked = localStorage.getItem('nexus_unlocked_avatars');
+          if (savedUnlocked) {
+            const parsed = JSON.parse(savedUnlocked);
+            guestUnlocked = Array.from(new Set([...guestUnlocked, ...parsed]));
+          }
+          const savedEquipped = localStorage.getItem('nexus_equipped_avatar');
+          if (savedEquipped) guestEquipped = savedEquipped;
         } catch (e) {}
 
         const guestName = localStorage.getItem('username') || 'Nexus Guest';
@@ -143,6 +193,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           uid: 'guest',
           displayName: guestName,
           nickname: guestName,
+          equippedAvatar: guestEquipped,
+          unlockedAvatars: guestUnlocked,
           favorites: guestFavs
         });
         if (unsubscribeProfile) {
@@ -280,6 +332,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, { merge: true });
   };
 
+  const equipAvatar = async (avatarId: string) => {
+    try {
+      localStorage.setItem('nexus_equipped_avatar', avatarId);
+    } catch (e) {}
+
+    setProfile(prev => prev ? {
+      ...prev,
+      equippedAvatar: avatarId
+    } : null);
+
+    if (user) {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, {
+          equippedAvatar: avatarId,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.warn('Error saving equipped avatar to firestore:', e);
+      }
+    }
+  };
+
+  const unlockAvatar = async (avatarId: string) => {
+    const currentUnlocked = profile?.unlockedAvatars || ['initiate_core', 'og_explorer', 'beta_tester'];
+    if (!currentUnlocked.includes(avatarId)) {
+      const updated = [...currentUnlocked, avatarId];
+      try {
+        localStorage.setItem('nexus_unlocked_avatars', JSON.stringify(updated));
+      } catch (e) {}
+
+      setProfile(prev => prev ? {
+        ...prev,
+        unlockedAvatars: updated
+      } : null);
+
+      if (user) {
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          await setDoc(userRef, {
+            unlockedAvatars: updated,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (e) {
+          console.warn('Error saving unlocked avatars to firestore:', e);
+        }
+      }
+    }
+  };
+
+  const lockAvatar = async (avatarId: string) => {
+    const currentUnlocked = profile?.unlockedAvatars || ['initiate_core', 'og_explorer', 'beta_tester'];
+    const updated = currentUnlocked.filter(id => id !== avatarId);
+    try {
+      localStorage.setItem('nexus_unlocked_avatars', JSON.stringify(updated));
+    } catch (e) {}
+
+    let newEquipped = profile?.equippedAvatar;
+    if (profile?.equippedAvatar === avatarId) {
+      newEquipped = 'initiate_core';
+      try {
+        localStorage.setItem('nexus_equipped_avatar', 'initiate_core');
+      } catch (e) {}
+    }
+
+    setProfile(prev => prev ? {
+      ...prev,
+      unlockedAvatars: updated,
+      equippedAvatar: newEquipped
+    } : null);
+
+    if (user) {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, {
+          unlockedAvatars: updated,
+          equippedAvatar: newEquipped,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.warn('Error saving locked avatar to firestore:', e);
+      }
+    }
+  };
+
   const deleteAccount = async () => {
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
@@ -312,6 +449,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unlockOwner,
       toggleFavorite,
       updateProfile,
+      equipAvatar,
+      unlockAvatar,
+      lockAvatar,
       deleteAccount
     }}>
       {children}

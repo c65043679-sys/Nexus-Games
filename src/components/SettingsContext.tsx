@@ -256,15 +256,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsPanicTriggered(false);
   }, []);
 
-  // Panic Key Event Listener with capture phase & iframe binding
+  // Panic Key Event Listener with capture phase, message listener, focus recovery & iframe binding
   useEffect(() => {
     const isPanicMatch = (e: KeyboardEvent) => {
       const key = settings.panicKey;
       if (!key) return false;
-      if (key === 'Backquote' && (e.code === 'Backquote' || e.key === '`' || e.key === '~')) return true;
-      if (key === 'Escape' && (e.code === 'Escape' || e.key === 'Escape')) return true;
-      if (key === 'AltP' && e.altKey && (e.code === 'KeyP' || e.key === 'p' || e.key === 'P')) return true;
-      if (key === 'AltZ' && e.altKey && (e.code === 'KeyZ' || e.key === 'z' || e.key === 'Z')) return true;
+      if (key === 'Backquote' && (e.code === 'Backquote' || e.key === '`' || e.key === '~' || e.keyCode === 192 || e.which === 192)) return true;
+      if (key === 'Escape' && (e.code === 'Escape' || e.key === 'Escape' || e.keyCode === 27 || e.which === 27)) return true;
+      if (key === 'AltP' && (e.altKey || e.metaKey) && (e.code === 'KeyP' || e.key === 'p' || e.key === 'P' || e.keyCode === 80 || e.which === 80)) return true;
+      if (key === 'AltZ' && (e.altKey || e.metaKey) && (e.code === 'KeyZ' || e.key === 'z' || e.key === 'Z' || e.keyCode === 90 || e.which === 90)) return true;
       return false;
     };
 
@@ -274,15 +274,35 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (isPanicMatch(e)) {
         if (!isTyping || settings.panicKey === 'AltP' || settings.panicKey === 'AltZ' || settings.panicKey === 'Escape') {
-          e.preventDefault();
-          e.stopPropagation();
+          try {
+            e.preventDefault();
+            e.stopPropagation();
+          } catch (err) {}
           triggerPanic();
+        }
+      }
+    };
+
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data === 'PANIC' || e.data?.type === 'PANIC' || e.data?.action === 'PANIC') {
+        triggerPanic();
+      }
+    };
+
+    // When mouse moves outside iframe onto the top window, restore window focus
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      if (document.activeElement?.tagName?.toLowerCase() === 'iframe') {
+        // Only regain focus if mouse is moving outside or near edges
+        if (e.clientY < 60 || e.clientX < 40 || e.clientX > window.innerWidth - 40) {
+          try { window.focus(); } catch (err) {}
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown, true);
     document.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('message', handleMessage);
+    window.addEventListener('mousemove', handleWindowMouseMove);
 
     const attachToIframes = () => {
       try {
@@ -292,6 +312,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (iframe.contentWindow) {
               iframe.contentWindow.removeEventListener('keydown', handleKeyDown, true);
               iframe.contentWindow.addEventListener('keydown', handleKeyDown, true);
+            }
+            if (iframe.contentDocument) {
+              iframe.contentDocument.removeEventListener('keydown', handleKeyDown, true);
+              iframe.contentDocument.addEventListener('keydown', handleKeyDown, true);
             }
           } catch (err) {
             // Cross-origin restriction
@@ -303,11 +327,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     attachToIframes();
-    const interval = setInterval(attachToIframes, 800);
+    const interval = setInterval(attachToIframes, 500);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('mousemove', handleWindowMouseMove);
       clearInterval(interval);
     };
   }, [settings.panicKey, triggerPanic]);
