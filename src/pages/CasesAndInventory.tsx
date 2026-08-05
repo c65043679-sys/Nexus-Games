@@ -19,8 +19,13 @@ export const CasesAndInventory: React.FC = () => {
   const { gamePoints, spendGamePoints, addGamePoints, availableXp, spendXp, refundXp } = useAchievements();
   const { settings } = useSettings();
 
-  const [activeTab, setActiveTab] = useState<'cases' | 'inventory'>('cases');
+  const [activeTab, setActiveTab] = useState<'cases' | 'inventory' | 'tradeup'>('cases');
   const [selectedRarityFilter, setSelectedRarityFilter] = useState<string>('all');
+
+  // Trade-Up Contracts State
+  const [tradeUpRarity, setTradeUpRarity] = useState<Rarity>('common');
+  const [tradeUpSlots, setTradeUpSlots] = useState<string[]>([]);
+  const [isForging, setIsForging] = useState<boolean>(false);
 
   // Unboxing Modal & Spinner state
   const [activeCase, setActiveCase] = useState<CaseItem | null>(null);
@@ -49,8 +54,104 @@ export const CasesAndInventory: React.FC = () => {
   const reelRef = useRef<HTMLDivElement | null>(null);
   const reelContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const unlockedIds = profile?.unlockedAvatars || ['initiate_core', 'og_explorer', 'beta_tester'];
+  const unlockedIds = profile?.unlockedAvatars || ['initiate_core'];
   const equippedId = profile?.equippedAvatar || 'initiate_core';
+
+  // Trade-Up Contracts Config & Handlers
+  const TRADEUP_ELIGIBLE_RARITIES: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'exotic'];
+
+  const NEXT_RARITY_MAP: Record<string, Rarity> = {
+    common: 'uncommon',
+    uncommon: 'rare',
+    rare: 'epic',
+    epic: 'legendary',
+    legendary: 'mythic',
+    mythic: 'exotic',
+    exotic: 'transcendent',
+  };
+
+  const targetTradeUpRarity = NEXT_RARITY_MAP[tradeUpRarity] || 'uncommon';
+  const targetRarityItems = AVATARS_CATALOG.filter((item) => item.rarity === targetTradeUpRarity);
+  const eligibleTradeUpItems = AVATARS_CATALOG.filter(
+    (item) => item.rarity === tradeUpRarity && unlockedIds.includes(item.id) && !isUnsellable(item.id)
+  );
+
+  const handleSelectRarityForTradeUp = (r: Rarity) => {
+    setTradeUpRarity(r);
+    setTradeUpSlots([]);
+  };
+
+  const handleToggleTradeUpSlot = (avatarId: string) => {
+    if (tradeUpSlots.includes(avatarId)) {
+      setTradeUpSlots((prev) => prev.filter((id) => id !== avatarId));
+      soundManager.playClick(settings.uiSoundEffects);
+    } else {
+      if (tradeUpSlots.length >= 5) return;
+      setTradeUpSlots((prev) => [...prev, avatarId]);
+      soundManager.playClick(settings.uiSoundEffects);
+    }
+  };
+
+  const handleRemoveTradeUpSlot = (avatarId: string) => {
+    setTradeUpSlots((prev) => prev.filter((id) => id !== avatarId));
+    soundManager.playClick(settings.uiSoundEffects);
+  };
+
+  const handleAutoFillTradeUp = () => {
+    const available = eligibleTradeUpItems.map((a) => a.id);
+    setTradeUpSlots(available.slice(0, 5));
+    soundManager.playClick(settings.uiSoundEffects);
+  };
+
+  const handleClearTradeUp = () => {
+    setTradeUpSlots([]);
+    soundManager.playClick(settings.uiSoundEffects);
+  };
+
+  const handleExecuteTradeUp = () => {
+    if (tradeUpSlots.length !== 5) return;
+    if (targetRarityItems.length === 0) return;
+
+    setIsForging(true);
+    soundManager.playCaseOpen(settings.uiSoundEffects);
+
+    setTimeout(() => {
+      const winningItem = targetRarityItems[Math.floor(Math.random() * targetRarityItems.length)];
+      const generatedFloat = (0.0015 + Math.random() * 0.12).toFixed(6);
+      const floatNum = Number(generatedFloat);
+      const wearGrade = floatNum < 0.07 ? 'Factory New' : floatNum < 0.15 ? 'Minimal Wear' : 'Field-Tested';
+
+      // Consume the 5 input items
+      tradeUpSlots.forEach((id) => {
+        lockAvatar(id);
+      });
+
+      // Unlock new forged finish
+      unlockAvatar(winningItem.id);
+
+      // Display winner reveal modal
+      setWonAvatar(winningItem);
+      setWonFloat(generatedFloat);
+      setWonWear(wearGrade);
+      setIsDuplicate(false);
+      setDuplicateRefund(0);
+      setShowResultModal(true);
+
+      setIsForging(false);
+      setTradeUpSlots([]);
+
+      soundManager.playItemReveal(winningItem.rarity, settings.uiSoundEffects);
+      try {
+        confetti({
+          particleCount: 160,
+          spread: 100,
+          origin: { y: 0.6 },
+        });
+      } catch (e) {
+        // Ignore
+      }
+    }, 2200);
+  };
 
   const toggleMultiSelectMode = () => {
     setIsMultiSelectMode((prev) => !prev);
@@ -409,7 +510,7 @@ export const CasesAndInventory: React.FC = () => {
       </div>
 
       {/* Main Navigation Tabs */}
-      <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+      <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
         <button
           onClick={() => setActiveTab('cases')}
           className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all cursor-pointer ${
@@ -430,6 +531,17 @@ export const CasesAndInventory: React.FC = () => {
           }`}
         >
           <Gift className="w-4 h-4" /> My Profile Armory ({unlockedIds.length} / {AVATARS_CATALOG.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('tradeup')}
+          className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+            activeTab === 'tradeup'
+              ? 'bg-gradient-to-r from-cyan-400 to-fuchsia-500 text-slate-950 shadow-lg shadow-cyan-500/20 font-black'
+              : 'bg-slate-900/80 text-slate-400 hover:text-white hover:bg-slate-800 border border-cyan-500/30 text-cyan-300'
+          }`}
+        >
+          <RefreshCw className="w-4 h-4" /> Trade-Up Contracts
         </button>
       </div>
 
@@ -792,6 +904,352 @@ export const CasesAndInventory: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: TRADE-UP CONTRACTS */}
+      {activeTab === 'tradeup' && (
+        <div className="space-y-8 animate-in fade-in duration-300">
+          {/* Forge Hero Banner & How it Works */}
+          <div className="bg-slate-950/90 border-2 border-cyan-500/40 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl space-y-6">
+            <div className="absolute -right-20 -top-20 w-80 h-80 bg-gradient-to-br from-cyan-500/20 via-fuchsia-500/20 to-transparent rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-fuchsia-500/20 border border-cyan-400/30 text-cyan-300 text-xs font-black uppercase tracking-widest">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Armory Trade-Up Forge
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  Trade-Up Contracts
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Turn 5 duplicate or extra items into <span className="text-cyan-300 font-bold">1 guaranteed item of the next higher rarity tier</span>!
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0 bg-slate-900/90 border border-white/10 p-3.5 rounded-2xl">
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Eligible Finishes</p>
+                  <p className="text-xl font-black text-cyan-300 font-mono">
+                    {eligibleTradeUpItems.length} Available
+                  </p>
+                </div>
+                <div className="p-3 bg-cyan-500/10 border border-cyan-400/30 rounded-xl text-cyan-300">
+                  <RefreshCw className="w-6 h-6" />
+                </div>
+              </div>
+            </div>
+
+            {/* How It Works - 3 Step Visual Guide */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 relative z-10">
+              <div className="bg-slate-900/80 border border-white/10 p-3.5 rounded-2xl flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-black text-xs flex items-center justify-center shrink-0">
+                  1
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">Pick Input Rarity</p>
+                  <p className="text-[10px] text-slate-400">Select the tier you want to trade in</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/80 border border-white/10 p-3.5 rounded-2xl flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-fuchsia-500/20 border border-fuchsia-400/40 text-fuchsia-300 font-black text-xs flex items-center justify-center shrink-0">
+                  2
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">Select 5 Finishes</p>
+                  <p className="text-[10px] text-slate-400">Click items or hit 'Auto-Fill 5'</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/80 border border-white/10 p-3.5 rounded-2xl flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-300 font-black text-xs flex items-center justify-center shrink-0">
+                  3
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">Sign & Forge</p>
+                  <p className="text-[10px] text-slate-400">Receive 1 item of next higher rarity</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Rarity Tier Selector & Upgrade Preview Bar */}
+          <div className="bg-slate-950/90 border border-white/10 rounded-3xl p-6 space-y-4 shadow-xl">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                  Step 1: Choose Rarity Tier to Upgrade
+                </label>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Selecting a tier shows all your eligible finishes in that category.
+                </p>
+              </div>
+
+              {/* Tier Transformation Arrow Badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-xs font-mono font-bold">
+                <span className={`px-2 py-0.5 rounded ${RARITY_CONFIG[tradeUpRarity]?.badgeBg}`}>
+                  {RARITY_CONFIG[tradeUpRarity]?.gradeLabel}
+                </span>
+                <span className="text-slate-400 font-sans font-bold">➔ (5 items) ➔</span>
+                <span className={`px-2 py-0.5 rounded ${RARITY_CONFIG[targetTradeUpRarity]?.badgeBg}`}>
+                  {RARITY_CONFIG[targetTradeUpRarity]?.gradeLabel}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {TRADEUP_ELIGIBLE_RARITIES.map((r) => {
+                const conf = RARITY_CONFIG[r];
+                const count = AVATARS_CATALOG.filter(
+                  (a) => a.rarity === r && unlockedIds.includes(a.id) && !isUnsellable(a.id)
+                ).length;
+                return (
+                  <button
+                    key={r}
+                    onClick={() => handleSelectRarityForTradeUp(r)}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-2 border ${
+                      tradeUpRarity === r
+                        ? `${conf.badgeBg} border-white/30 text-white font-extrabold shadow-md`
+                        : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 border-white/5'
+                    }`}
+                  >
+                    <span>{conf.gradeLabel}</span>
+                    <span className="px-1.5 py-0.5 rounded-md bg-black/40 text-[10px] font-mono font-bold">
+                      {count} owned
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Contract Slots Matrix */}
+          <div className="bg-slate-950/90 border-2 border-white/10 rounded-3xl p-6 space-y-6 shadow-2xl">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-cyan-400" />
+                  Step 2: Fill Contract Slots ({tradeUpSlots.length} / 5)
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Input: <span className={RARITY_CONFIG[tradeUpRarity]?.textColor}>{RARITY_CONFIG[tradeUpRarity]?.gradeLabel}</span> ➔ Output: <span className={RARITY_CONFIG[targetTradeUpRarity]?.textColor}>{RARITY_CONFIG[targetTradeUpRarity]?.gradeLabel}</span>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleAutoFillTradeUp}
+                  disabled={eligibleTradeUpItems.length < 5}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 transition-all cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
+                >
+                  ⚡ Auto-Fill 5 Items
+                </button>
+                <button
+                  onClick={handleClearTradeUp}
+                  disabled={tradeUpSlots.length === 0}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all cursor-pointer disabled:opacity-40"
+                >
+                  Clear Slots
+                </button>
+              </div>
+            </div>
+
+            {/* 5 Input Slots */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
+              {[0, 1, 2, 3, 4].map((slotIdx) => {
+                const avatarId = tradeUpSlots[slotIdx];
+                const avatar = AVATARS_CATALOG.find((a) => a.id === avatarId);
+
+                if (avatar) {
+                  const conf = RARITY_CONFIG[avatar.rarity];
+                  const { floatStr, wear } = getAvatarFloatAndWear(avatar.id);
+                  return (
+                    <div
+                      key={slotIdx}
+                      className={`relative bg-slate-900 border-2 ${conf.borderColor} ${conf.bgColor} rounded-2xl p-3 flex flex-col items-center justify-between space-y-2 group shadow-lg`}
+                    >
+                      <button
+                        onClick={() => handleRemoveTradeUpSlot(avatar.id)}
+                        className="absolute top-1.5 right-1.5 p-1 rounded-full bg-slate-950/80 text-slate-400 hover:text-red-400 hover:bg-red-500/20 transition-all cursor-pointer z-20"
+                        title="Remove from Contract"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+
+                      <div className="pt-2">
+                        <AvatarDisplay avatarId={avatar.id} size="md" />
+                      </div>
+
+                      <div className="text-center w-full">
+                        <p className="text-xs font-black text-white truncate w-full">{avatar.name}</p>
+                        <p className="text-[9px] font-mono text-slate-400">{wear}</p>
+                      </div>
+
+                      <div className={`h-1 w-full rounded-full ${conf.barColor}`} />
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    key={slotIdx}
+                    className="bg-slate-900/40 border-2 border-dashed border-white/15 hover:border-cyan-400/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center space-y-2 min-h-[150px] transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-slate-800/80 border border-white/10 flex items-center justify-center text-slate-500 font-bold text-sm">
+                      #{slotIdx + 1}
+                    </div>
+                    <p className="text-[11px] font-bold text-slate-500">Slot Empty</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Step 3: Execute Button */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10">
+              <div className="text-left space-y-0.5">
+                <p className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <span>Guaranteed Outcome Grade:</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-black ${RARITY_CONFIG[targetTradeUpRarity]?.badgeBg}`}>
+                    {RARITY_CONFIG[targetTradeUpRarity]?.gradeLabel}
+                  </span>
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Forges 1 randomized item from {targetRarityItems.length} possible finishes in the {RARITY_CONFIG[targetTradeUpRarity]?.label} tier.
+                </p>
+              </div>
+
+              <button
+                onClick={handleExecuteTradeUp}
+                disabled={tradeUpSlots.length !== 5}
+                className={`w-full sm:w-auto px-8 py-3.5 rounded-2xl font-black text-sm tracking-wide uppercase transition-all cursor-pointer shadow-xl flex items-center justify-center gap-2 active:scale-95 ${
+                  tradeUpSlots.length === 5
+                    ? 'bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-amber-400 text-slate-950 shadow-cyan-500/30'
+                    : 'bg-slate-900 text-slate-500 border border-white/10 cursor-not-allowed'
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                {tradeUpSlots.length === 5 ? 'Sign & Forge Contract' : `Select ${5 - tradeUpSlots.length} More Items`}
+              </button>
+            </div>
+          </div>
+
+          {/* Target Grade Outcomes Preview */}
+          <div className="bg-slate-950/90 border border-white/10 rounded-3xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-cyan-400" />
+                  Possible Outcomes ({targetRarityItems.length} Finishes in {RARITY_CONFIG[targetTradeUpRarity]?.gradeLabel})
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  When you forge, you will win 1 of these items at random:
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+              {targetRarityItems.map((av) => {
+                const conf = RARITY_CONFIG[av.rarity];
+                return (
+                  <div
+                    key={av.id}
+                    className={`bg-slate-900/80 border ${conf.borderColor} rounded-xl p-3 flex flex-col items-center text-center space-y-2`}
+                  >
+                    <AvatarDisplay avatarId={av.id} size="sm" />
+                    <div>
+                      <p className="text-xs font-bold text-white truncate w-full">{av.name}</p>
+                      <p className={`text-[9px] font-mono font-bold ${conf.textColor}`}>{conf.label}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Eligible Inventory Selector Grid */}
+          <div className="bg-slate-950/90 border border-white/10 rounded-3xl p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-cyan-400" />
+                  Your Owned {RARITY_CONFIG[tradeUpRarity]?.gradeLabel} Items ({eligibleTradeUpItems.length})
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">Click any item below to add or remove it from your 5 contract slots</p>
+              </div>
+            </div>
+
+            {eligibleTradeUpItems.length === 0 ? (
+              <div className="text-center py-10 bg-slate-900/50 rounded-2xl border border-dashed border-white/10">
+                <Package className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                <p className="text-sm font-bold text-slate-400">No {RARITY_CONFIG[tradeUpRarity]?.gradeLabel} Items Available</p>
+                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                  You need unlocked items of <span className={RARITY_CONFIG[tradeUpRarity]?.textColor}>{RARITY_CONFIG[tradeUpRarity]?.gradeLabel}</span> grade to execute this contract. Unbox cases or select another rarity tier above!
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                {eligibleTradeUpItems.map((item) => {
+                  const isSelected = tradeUpSlots.includes(item.id);
+                  const conf = RARITY_CONFIG[item.rarity];
+                  const { wear } = getAvatarFloatAndWear(item.id);
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleToggleTradeUpSlot(item.id)}
+                      className={`relative bg-slate-900 border-2 rounded-2xl p-3 flex flex-col items-center justify-between text-center space-y-2 transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'border-cyan-400 bg-cyan-950/40 font-bold'
+                          : 'border-white/10 hover:border-white/30 hover:bg-slate-800/80'
+                      }`}
+                    >
+                      {isSelected ? (
+                        <div className="absolute top-2 right-2 bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded-full z-10 shadow-md text-[10px] font-black flex items-center gap-1">
+                          <Check className="w-3 h-3 stroke-[3]" /> Added
+                        </div>
+                      ) : (
+                        <div className="absolute top-2 right-2 bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-full text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                          + Add
+                        </div>
+                      )}
+
+                      <AvatarDisplay avatarId={item.id} size="sm" />
+                      <div className="w-full">
+                        <p className="text-xs font-bold text-white truncate w-full">{item.name}</p>
+                        <p className="text-[9px] font-mono text-slate-400">{wear}</p>
+                      </div>
+
+                      <div className={`h-1 w-full rounded-full ${conf.barColor}`} />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* FORGING ANIMATION OVERLAY MODAL */}
+      {isForging && (
+        <div className="fixed inset-0 z-[100000] bg-slate-950/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-300">
+          <div className="relative max-w-md w-full bg-slate-900/90 border-2 border-cyan-400/80 rounded-3xl p-8 space-y-6 shadow-[0_0_80px_rgba(0,242,254,0.3)] overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 via-fuchsia-500/10 to-amber-500/10 animate-pulse pointer-events-none" />
+            <div className="relative z-10 space-y-4">
+              <div className="w-20 h-20 mx-auto rounded-2xl bg-cyan-500/20 border-2 border-cyan-400 flex items-center justify-center text-cyan-300 shadow-[0_0_30px_rgba(0,242,254,0.5)] animate-spin-slow">
+                <RefreshCw className="w-10 h-10 animate-spin" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-white tracking-wider uppercase">Forging Contract</h3>
+                <p className="text-xs text-cyan-300 font-mono animate-pulse">
+                  Fusing 5 {RARITY_CONFIG[tradeUpRarity]?.gradeLabel} Finishes...
+                </p>
+              </div>
+              <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-white/10">
+                <div className="bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-amber-400 h-full w-full animate-pulse" />
+              </div>
+            </div>
           </div>
         </div>
       )}

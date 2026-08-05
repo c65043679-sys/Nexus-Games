@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('username', autoGamerTag);
 
         let localFavs: string[] = [];
-        let localUnlocked: string[] = ['initiate_core', 'og_explorer', 'beta_tester'];
+        let localUnlocked: string[] = ['initiate_core'];
         let localEquipped = isUserOwner ? 'sovereign_crown' : 'initiate_core';
 
         if (isUserOwner) {
@@ -135,9 +135,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               updates.nickname = autoGamerTag;
               updates.displayName = autoGamerTag;
             }
-            // Ensure mandatory OG / Beta / Sovereign avatars are present
+            // Ensure mandatory starter / Sovereign avatars are present
             const docUnlocked: string[] = data?.unlockedAvatars || ['initiate_core'];
-            const mergedUnlocked = Array.from(new Set([...docUnlocked, 'initiate_core', 'og_explorer', 'beta_tester', ...(isUserOwner ? ['sovereign_crown'] : [])]));
+            const mergedUnlocked = Array.from(new Set([...docUnlocked, 'initiate_core', ...(isUserOwner ? ['sovereign_crown'] : [])]));
             if (mergedUnlocked.length !== docUnlocked.length) {
               updates.unlockedAvatars = mergedUnlocked;
             }
@@ -155,7 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
             if (docSnap.exists()) {
               const snapData = docSnap.data();
-              const baseUnlocked = ['initiate_core', 'og_explorer', 'beta_tester', ...(isUserOwner ? ['sovereign_crown'] : [])];
+              const baseUnlocked = ['initiate_core', ...(isUserOwner ? ['sovereign_crown'] : [])];
               const finalUnlocked = Array.from(new Set([...baseUnlocked, ...(snapData.unlockedAvatars || [])]));
               setProfile({
                 ...snapData,
@@ -172,7 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setUser(null);
         let guestFavs: string[] = [];
-        let guestUnlocked: string[] = ['initiate_core', 'og_explorer', 'beta_tester'];
+        let guestUnlocked: string[] = ['initiate_core'];
         if (isOwnerUnlocked) guestUnlocked.push('sovereign_crown');
         let guestEquipped = isOwnerUnlocked ? 'sovereign_crown' : 'initiate_core';
 
@@ -356,7 +356,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const unlockAvatar = async (avatarId: string) => {
-    const currentUnlocked = profile?.unlockedAvatars || ['initiate_core', 'og_explorer', 'beta_tester'];
+    const currentUnlocked = profile?.unlockedAvatars || ['initiate_core'];
     if (!currentUnlocked.includes(avatarId)) {
       const updated = [...currentUnlocked, avatarId];
       try {
@@ -383,7 +383,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const lockAvatar = async (avatarId: string) => {
-    const currentUnlocked = profile?.unlockedAvatars || ['initiate_core', 'og_explorer', 'beta_tester'];
+    const currentUnlocked = profile?.unlockedAvatars || ['initiate_core'];
     const updated = currentUnlocked.filter(id => id !== avatarId);
     try {
       localStorage.setItem('nexus_unlocked_avatars', JSON.stringify(updated));

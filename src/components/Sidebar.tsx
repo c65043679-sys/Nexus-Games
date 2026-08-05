@@ -79,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onCategoryChan
                 : 'text-slate-400 border border-transparent hover:text-amber-300 hover:bg-white/5'
             }`}
           >
-            <Package className="w-5 h-5 text-amber-400 animate-pulse" />
+            <Package className="w-5 h-5 text-amber-400" />
             <span className="text-sm font-bold">Cases & Inventory</span>
           </Link>
 

@@ -72,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
           title="Unbox Cases & Avatar Inventory"
           className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 bg-amber-500/20 border border-amber-500/40 hover:bg-amber-500/30 text-amber-300 text-[11px] sm:text-xs font-bold rounded-full transition-all active:scale-95 shadow-sm shadow-amber-500/10"
         >
-          <Package className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+          <Package className="w-3.5 h-3.5 text-amber-400" />
           <span className="hidden sm:inline">Cases</span>
         </Link>
 
