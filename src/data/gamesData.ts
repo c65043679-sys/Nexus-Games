@@ -224,7 +224,7 @@ export const GAMES: Game[] = [
     thumbnail: "/images/slope.jpg",
     color: "#22c55e",
     category: "Arcade",
-    iframe: "https://hub-pro.github.io/games/slope/index.html",
+    iframe: "https://slopeworksnow.netlify.app/",
     controls: "Arrow keys or AD to steer.",
     rating: 4.7,
     allow: "autoplay; fullscreen; accelerometer; gyroscope; gamepad; pointer-lock",
